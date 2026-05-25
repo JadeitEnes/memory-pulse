@@ -309,7 +309,7 @@ class PostgresPriceRepository(IPriceRepository):
             "recorded_at": record.recorded_at,
             "is_validated": record.is_validated,
             "notes": record.notes,
-            "created_at": record.created_at,
+            "created_at": record.created_at, 
         }        
          
         
