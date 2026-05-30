@@ -20,7 +20,7 @@ target_metadata = Base.metadata
 def get_url() -> str:
 
     from app.core.config import get_settings
-    settings = get_settings
+    settings = get_settings()
     return settings.DATABASE_URL
 
 def run_migrations_offline() -> None:
@@ -54,7 +54,7 @@ async def run_async_migrations() -> None:
 
     connectable = async_engine_from_config(
         configuration,
-        prefix="sqalchemy.",
+        prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )     
 

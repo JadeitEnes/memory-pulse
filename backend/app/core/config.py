@@ -17,16 +17,16 @@ class Settings(BaseSettings):
     ENVIRONMENT: Literal["development", "staging", "production"] = "development"
     DEBUG: bool = False
 
-    API_VI_PREFIX: str = "/api/v1"
+    API_V1_PREFIX: str = "/api/v1"
     ALLOWED_ORIGINS: list[str] = Field(
         default=["http://localhost:3000", "http://localhost:5173"]
     )
 
     DATABASE_URL: str = Field(
-        default="postgresql+ascnypg://memory_user:memory_pass@localhost:5432/memory_pulse"
+        default="postgresql+asyncpg://memory_user:memory_pass@localhost:5432/memory_pulse"
     )
 
-    DP_POOL_SIZE: int = 10
+    DB_POOL_SIZE: int = 10
     DB_MAX_OVERFLOW: int = 20
     DB_POOL_TIMEOUT: int = 30
 
@@ -43,9 +43,9 @@ class Settings(BaseSettings):
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     LOG_FORMAT: Literal["json", "console"] = "console"
 
-    SCRAPPER_REQUEST_DELAY_SECONDS: float = 2.0
-    SCRAPPER_MAX_RETRIES: int = 3
-    SCRAPPER_TIMEOUT_SECONDS: int = 30
+    SCRAPER_REQUEST_DELAY_SECONDS: float = 2.0
+    SCRAPER_MAX_RETRIES: int = 3
+    SCRAPER_TIMEOUT_SECONDS: int = 30
     USER_AGENT: str = ("Mozilla/5.0 (compatible; MemoryPulseBot/1.0; +https://example.com/bot)"
     )
 
@@ -64,7 +64,7 @@ class Settings(BaseSettings):
     def is_development(self) -> bool:
         return self.ENVIRONMENT == "development"
     
-    @lru_cache(maxsize=1)
-    def get_settings() -> Settings:
+@lru_cache(maxsize=1)
+def get_settings() -> Settings:
         
-        return Settings()
+    return Settings()
