@@ -1,0 +1,129 @@
+version: "3.9"
+
+services:
+
+  db:
+   image: timescale/timescaledb:latest-pg15
+   container_name: memory_pulse_db
+   environment:
+       POSTGRES_USER: ${POSTGRES_USER:-memory_user}
+       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-memory_pass}
+       POSTGRES_DB: ${POSTGRES_DB:-memory_pulse}
+   ports:
+         - "5432:5432"
+
+   volumes:
+   - postgres_data:/var/lib/postgresql/data
+   - ./docker/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql
+   healthcheck:
+     test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-memory_user} -d ${POSTGRES_DB:-memory_pulse}"]
+     interval: 10s
+     timeout: 5s
+     retries: 5
+   networks:
+    - memory_net
+   restart: unless-stopped
+
+   redis:
+     image: redis:7-alpine
+     container_name: memory_pulse_redis
+     ports:
+      - "6379:6379"
+     volumes:
+      - redis_data:/data
+     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+     healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+     networks:
+      - memory_net
+     restart: unless-stopped
+
+  api:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: memory_pulse_api
+    environment:
+     - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-memory_user}:${POSTGRES_PASSWORD:-memory_pass}@db:5432/${POSTGRES_DB:-memory_pulse}
+      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=development
+      - LOG_LEVEL=DEBUG
+    ports:
+      -"8000:8000"
+
+    volumes:
+     - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+     - memory_net
+    restart: unless-stopped
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  worker:
+   build:
+    context: ./backend
+    dockerfile: Dockerfile
+    target: development
+   container_name: memory_pulse_worker
+   environment:
+    - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-memory_user}:${POSTGRES_PASSWORD:-memory_pass}@db:5432/${POSTGRES_DB:-memory_pulse}
+      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=development  
+   volumes:
+    - ./backend:/app
+   depends_on:
+     db:
+       condition: service_healthy
+     redis:
+       condition: service_healthy
+   networks:
+     - memory_net
+   restart: unless-stopped
+   command: celery -A app.infrastructure.celery_app worker --loglevel=info -Q prices,scrapers
+  beat:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: memory_pulse_beat
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-memory_user}:${POSTGRES_PASSWORD:-memory_pass}@db:5432/${POSTGRES_DB:-memory_pulse}
+      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=development
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - redis
+    networks:
+      - memory_net
+    restart: unless-stopped
+    command: celery -A app.infrastructure.celery_app beat --loglevel=info 
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  memory_net:
+    driver: bridge      
+
+  
+   
+   
+
+   
+     
+
+         
+
+

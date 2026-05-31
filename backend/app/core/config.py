@@ -49,7 +49,7 @@ class Settings(BaseSettings):
     USER_AGENT: str = ("Mozilla/5.0 (compatible; MemoryPulseBot/1.0; +https://example.com/bot)"
     )
 
-    PRICE_COLLECTION_INVERTAL_MINUTES: int = 360
+    PRICE_COLLECTION_INTERVAL_MINUTES: int = 360
 
     @field_validator("ENVIRONMENT")
     @classmethod
