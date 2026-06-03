@@ -4,6 +4,10 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.repositories.implementations.postgres_price_repository import (
+    PostgresPriceRepository,
+)
+from app.repositories.interfaces.price_repository import IPriceRepository
 from app.services.price_service import PriceService
 
 def get_price_repository(
