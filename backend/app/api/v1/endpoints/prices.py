@@ -152,8 +152,14 @@ async def get_price_history(
                 raise HTTPException(
                     status_code=400,
                     detail=f"Invalid component: {component}. Valid: {[e.value for e in MemoryComponent]}",
-                    
-                )
+                    )
+            segment_enum = None
+            if market_segment:
+                try:
+                    segment_enum = MarketSegment(market_segment.upper())
+                except ValueError:
+                    raise HTTPException(status_code=400, detail=f"Invalid segment: {market_segment}")
+
             filters = PriceFilterSchema(
                 component=component_enum,
                 market_segment=segment_enum,
