@@ -15,15 +15,7 @@ _redis_client: redis.Redis | None = None
 
 
 def get_redis_client() -> redis.Redis:
-    """
-    Redis connection singleton.
-
-    WHY tek client (her çağrıda yeni bağlantı açmıyoruz)?
-      redis.asyncio.Redis.from_url() arka planda bir connection pool
-      kurar. Bu, PostgreSQL'deki connection pool mantığının Redis
-      karşılığıdır — TCP bağlantısını her seferinde yeniden açmak
-      yerine havuzdan kullanır.
-    """
+   
     global _redis_client
     if _redis_client is None:
         _redis_client = redis.from_url(
@@ -35,7 +27,6 @@ def get_redis_client() -> redis.Redis:
 
 
 async def close_redis_client() -> None:
-    """Uygulama kapanırken bağlantı havuzunu düzgün kapat (main.py lifespan'da çağrılır)."""
     global _redis_client
     if _redis_client is not None:
         await _redis_client.close()

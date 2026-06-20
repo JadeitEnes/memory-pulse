@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -6,12 +7,46 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.v1.router import api_v1_router
+from app.core.cache import close_redis_client
 from app.core.config import get_settings
 from app.core.logging import get_logger, setup_logging
 
 setup_logging()
 logger = get_logger(__name__)
 settings = get_settings()
+
+async def _price_broadcaster_loop() -> None:
+    from app.api.v1.endpoints.websocket import manager
+    from app.core.database import AsyncSessionFactory
+    from app.repositories.implementations.postgres_price_repository import (PostgresPriceRepository,
+    )
+    from app.services.price_service import PriceService
+
+
+ 
+    while True:
+        try:
+            await asyncio.sleep(settings.WS_BROADCAST_INTERVAL_SECONDS)
+ 
+            if not manager.has_connections:
+                continue
+ 
+            async with AsyncSessionFactory() as session:
+                repo = PostgresPriceRepository(session=session)
+                service = PriceService(price_repository=repo)
+                latest = await service.get_latest_prices()
+ 
+            await manager.broadcast({
+                "type": "price_update",
+                "data": [p.model_dump(mode="json") for p in latest],
+            })
+            logger.debug("broadcast_sent", connections=manager.connection_count)
+ 
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:
+            
+            logger.error("broadcaster_loop_error", error=str(e))
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -34,31 +69,30 @@ async def lifespan(app: FastAPI):
             logger.info("startup_db_connection_ok")
 
         logger.info("application_started")
-
+        broadcaster_task = asyncio.create_task(_price_broadcaster_loop())
+        
         yield
 
         logger.info("application_shutting_down")
+        
+        broadcaster_task.cancel()
+        try:
+            await broadcaster_task
+        except asyncio.CancelledError:
+            pass
 
         from app.core.database import engine
         await engine.dispose()
+        await close_redis_client()
+        
+        logger.info("application_stopped")
+
 
 def create_application() -> FastAPI:
 
     app = FastAPI(
         title=settings.APP_NAME,
         version=settings.APP_VERSION,
-         description="""
-## Memory Market Intelligence Platform
- 
-AI yatirimlarinin DRAM, NAND, RAM ve SSD piyasasina etkisini analiz eden API.
- 
-### Features
- Real-time price tracking
- Time-series data analysis
- Price forecasting (coming soon)
- Anomaly detection (coming soon)
-        """,
-        
         docs_url="/docs" if not settings.is_production else None,
         redoc_url="/redoc" if not settings.is_production else None,
         openapi_url="/openapi.json" if not settings.is_production else None,
@@ -104,6 +138,7 @@ AI yatirimlarinin DRAM, NAND, RAM ve SSD piyasasina etkisini analiz eden API.
             "version": settings.APP_VERSION,
             "docs": "/docs",
             "health": "/api/v1/health",
+            "websocket": "/api/v1/ws/prices",
         }
     return app
 
