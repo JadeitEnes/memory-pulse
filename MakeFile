@@ -1,14 +1,14 @@
 .PHONY: help dev dev-build stop logs shell db-shell migrate migrate-create migrate-down seed test test-unit lint format clean
 
 help:
-    @echo ""
+	@echo ""
 	@echo "Memory Pulse - Developer Commands"
 	@echo " - - - - - - - - - - - - - - - - "
-	@echo " make dev        > Start full dev stack"
+	@echo " make dev  > Start full dev stack"
 	@echo " make dev-build  > Rebuild and start"
-	@echo " make stop       > Stop all containers" 
-	@echo " make logs       > Follow API logs"
-	@echo " make migrate    > Apply pending migrations"
+	@echo " make stop > Stop all containers" 
+	@echo " make logs > Follow API logs"
+	@echo " make migrate > Apply pending migrations"
 	@echo " make migrate-create m= 'desc' > New migration"
 	@echo " make migrate-down > Rollback last migration"
 	@echo " make seed > Seed DB with simulated data"
@@ -20,33 +20,33 @@ help:
 	@echo ""
 
 dev:
-    docker compose up
+	docker compose up
 
 dev-build:
-     docker compose up --build
+	docker compose up --build
 
 stop:
-    docker compose stop
+	docker compose stop
 
 down:
-    docker compose down
+	docker compose down
 
 logs: docker compose logs -f api	
 
 logs-worker:
-      docker compose logs -f worker
+	docker compose logs -f worker
 
 shell:	  
-   docker compose exec api /bin/bash
+	docker compose exec api /bin/bash
 
 db-shell:
-   docker compose exec db psql -U $${POSTGRES_USER:-memory_user} -d $${POSTGRES_DB:-memory_pulse}
+	docker compose exec db psql -U $${POSTGRES_USER:-memory_user} -d $${POSTGRES_DB:-memory_pulse}
 
 redis-shell:
-   docker compose exec redis redis-cli
+	docker compose exec redis redis-cli
 
 migrate:
-    docker compose exec api alembic upgrade head
+	docker compose exec api alembic upgrade head
 
 migrate-create:
 	docker compose exec api alembic revision --autogenerate -m "$(m)"
@@ -74,6 +74,6 @@ format:
 	docker compose exec api isort app/tests/ --profile=black		
 
 clean:
-    @echo " This will delete ALL data!"
+	@echo " This will delete ALL data!"
 	@read -p "Are you sure? [y/N]: " confirm && [ "$$confirm" = "y"]
 	docker compose down -v --remove-orphans
