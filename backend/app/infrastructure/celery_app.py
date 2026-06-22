@@ -3,7 +3,7 @@ from celery.schedules import crontab
 
 from app.core.config import get_settings
 
-get_settings = get_settings()
+settings = get_settings()
 
 def create_celery_app() -> Celery:
     app = Celery(
@@ -28,7 +28,7 @@ def create_celery_app() -> Celery:
         task_acks_late=True,
         worker_prefetch_multiplier=1,
         beat_schedule={
-            "collect-prices-every-6h":{ 
+            "collect-prices-every-6h":{
                 "task": "app.infrastructure.tasks.price_tasks.collect_all_prices",
                 "schedule": crontab(minute=0, hour="*/6"),
                 "options": {"queue": "prices"},
@@ -42,7 +42,7 @@ def create_celery_app() -> Celery:
                "task": "app.infrastructure.tasks.price_tasks.cleanup_old_records",
                "schedule": crontab(minute=0, hour=3, day_of_week=0),
                 "options": {"queue": "prices"},
-           },    
+           },
         },
     )
 

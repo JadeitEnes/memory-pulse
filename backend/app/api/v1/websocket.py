@@ -7,7 +7,7 @@ logger = get_logger(__name__)
 
 
 class ConnectionManager:
-  
+
     def __init__(self) -> None:
         self._active_connections: list[WebSocket] = []
 
@@ -29,7 +29,7 @@ class ConnectionManager:
             self._active_connections.remove(websocket)
         logger.info("websocket_disconnected", total_connections=self.connection_count)
 
-    async def broadcast(self, message: dict) -> None:      
+    async def broadcast(self, message: dict) -> None:
         dead_connections = []
         for connection in self._active_connections:
             try:
@@ -45,7 +45,7 @@ manager = ConnectionManager()
 
 
 @router.websocket("/ws/prices")
-async def websocket_price_stream(websocket: WebSocket): 
+async def websocket_price_stream(websocket: WebSocket):
     await manager.connect(websocket)
     try:
         while True:

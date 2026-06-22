@@ -39,17 +39,17 @@ class PriceService:
         record = await self._repo.get_by_id(price_id)
         if not record:
             raise RuntimeError(f"Price saved but not retrievable: {price_id}")
-        
+
         return PriceResponseSchema.model_validate(record)
-    
+
     async def bulk_create_price_records(
             self,
             prices: list[PriceCreateSchema],
     ) -> dict[str,int]:
-        
+
         if not prices:
             return {"saved": 0, "skipped": 0, "total": 0}
-        
+
         logger.info("bulk_price_import_started", count=len(prices))
 
         saved_count = await self._repo.save_batch(prices)
@@ -67,7 +67,7 @@ class PriceService:
             "skipped": skipped_count,
             "total": len(prices),
         }
-    
+
     async def get_price_history(
             self,
             filters: PriceFilterSchema,
@@ -84,7 +84,6 @@ class PriceService:
             limit=filters.limit,
             offset=filters.offset,
         )
-    
     async def get_price_summary(
             self,
             component: str,
@@ -97,22 +96,22 @@ class PriceService:
 
         if summary is None:
             raise PriceNotFoundError(component=component)
-        
+
         return summary
-    
+
     async def get_latest_prices(self) -> list[PriceResponseSchema]:
         components = await self._repo.get_all_components()
-        
+
         latests_prices = []
         for component in components:
             records = await self._repo.get_latest_by_component(component, limit=1)
-            
+
             if records:
                 latests_prices.append(
                     PriceListResponseSchema.model_validate(records[0])
                 )
 
-            logger.debug("latest_prices_fetched", component_count=len(latest_prices))
+            logger.debug("latest_prices_fetched", component_count=len(latests_prices))
 
             return latests_prices
 
@@ -122,12 +121,12 @@ class PriceService:
 
             overview = []
             for component in components:
-            try:
-                summary = await self._repo.get_price_summary(component, days=30)
-                if summary:
-                    overview.append(summary)
-            except Exception as e:
-                logger.warning(
+                try:
+                    summary = await self._repo.get_price_summary(component, days=30)
+                    if summary:
+                        overview.append(summary)
+                except Exception as e:
+                    logger.warning(
                     "summary_fetch_failed",
                     component=component,
                     error=str(e),
@@ -138,7 +137,7 @@ class PriceService:
                     "total_components": len(overview),
                     "generated_at": datetime.now(timezone.utc).isoformat(),
                 }
-            
+
             async def _validate_price_business_rules(
                     self,
                     price_data: PriceCreateSchema,
@@ -150,12 +149,4 @@ class PriceService:
                     )
                 pass
 
-
-                
-                    
-           
-                 
-    
-            
-        
 
