@@ -14,15 +14,15 @@ def upgrade() -> None:
         sa.Column("component", sa.String(50), nullable=False),
         sa.Column("market_segment", sa.String(50), nullable=False),
         sa.Column("price_value", sa.Numeric(precision=12, scale=4), nullable=False),
-        sa.Column("price_unit", sa.String(30),  nullable=False),
-        sa.Column("currency", sa.String(50),  nullable=False),
-        sa.Column("data_source", sa.String(50),  nullable=False),
-        sa.Column("source_url", sa.Text(),  nullable=True),
+        sa.Column("price_unit", sa.String(30), nullable=False),
+        sa.Column("currency", sa.String(3), nullable=False),
+        sa.Column("data_source", sa.String(50), nullable=False),
+        sa.Column("source_url", sa.Text(), nullable=True),
         sa.Column("recorded_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("NOW()"), nullable=False),
-        sa.Column("is_validated", sa.Boolean(),  nullable=False, server_default="false"),
-        sa.Column("notes", sa.Text(),  nullable=True),
-        sa.PrimaryKeyConstraint("id"),
+        sa.Column("is_validated", sa.Boolean(), nullable=False, server_default="false"),
+        sa.Column("notes", sa.Text(), nullable=True),
+        sa.PrimaryKeyConstraint("id", "recorded_at"),
     )
 
     op.create_unique_constraint(
@@ -47,7 +47,7 @@ def upgrade() -> None:
     
     op.create_table(
         "market_summaries",
-        sa.column("id", sa.Integer(), autoincrement=True, nullable=False),
+        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("summary_date", sa.DateTime(timezone=True), nullable=False),
         sa.Column("component", sa.String(50), nullable=False),
         sa.Column("market_segment", sa.String(50), nullable=False),

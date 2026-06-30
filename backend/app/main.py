@@ -62,30 +62,29 @@ async def lifespan(app: FastAPI):
     db_ok = await check_db_connection()
     if not db_ok:
         logger.error("startup_db_connection_failed")
-
         if settings.is_production:
             raise RuntimeError("Cannot connect to database on startup")
-        else:
-            logger.info("startup_db_connection_ok")
+    else:
+        logger.info("startup_db_connection_ok")
 
-        logger.info("application_started")
-        broadcaster_task = asyncio.create_task(_price_broadcaster_loop())
-        
-        yield
+    logger.info("application_started")
+    broadcaster_task = asyncio.create_task(_price_broadcaster_loop())
 
-        logger.info("application_shutting_down")
-        
-        broadcaster_task.cancel()
-        try:
-            await broadcaster_task
-        except asyncio.CancelledError:
-            pass
+    yield
 
-        from app.core.database import engine
-        await engine.dispose()
-        await close_redis_client()
-        
-        logger.info("application_stopped")
+    logger.info("application_shutting_down")
+
+    broadcaster_task.cancel()
+    try:
+        await broadcaster_task
+    except asyncio.CancelledError:
+        pass
+
+    from app.core.database import engine
+    await engine.dispose()
+    await close_redis_client()
+
+    logger.info("application_stopped")
 
 
 def create_application() -> FastAPI:

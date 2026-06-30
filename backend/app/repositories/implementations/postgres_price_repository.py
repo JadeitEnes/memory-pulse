@@ -43,7 +43,7 @@ class PostgresPriceRepository(IPriceRepository):
                 )
 
                 result = await self._session.execute(stmt)
-                row = result.fetchone
+                row = result.fetchone()
 
                 if row is None:
                      logger.warning(

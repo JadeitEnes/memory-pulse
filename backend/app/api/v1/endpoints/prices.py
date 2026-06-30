@@ -44,7 +44,7 @@ async def create_price(
     
     except (InvalidPriceError, ValidationError) as e:
         raise HTTPException(
-            status_code=status.HTTP_402_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail={"message": e.message, "details": e.details},
         )
     except DatabaseError as e:
@@ -152,24 +152,25 @@ async def get_price_history(
                 raise HTTPException(
                     status_code=400,
                     detail=f"Invalid component: {component}. Valid: {[e.value for e in MemoryComponent]}",
-                    )
-            segment_enum = None
-            if market_segment:
-                try:
-                    segment_enum = MarketSegment(market_segment.upper())
-                except ValueError:
-                    raise HTTPException(status_code=400, detail=f"Invalid segment: {market_segment}")
+                )
 
-            filters = PriceFilterSchema(
-                component=component_enum,
-                market_segment=segment_enum,
-                days=days,
-                limit=limit,
-                offset=offset,
-            )
+        segment_enum = None
+        if market_segment:
+            try:
+                segment_enum = MarketSegment(market_segment.upper())
+            except ValueError:
+                raise HTTPException(status_code=400, detail=f"Invalid segment: {market_segment}")
 
-            return await service.get_price_history(filters)
-    
+        filters = PriceFilterSchema(
+            component=component_enum,
+            market_segment=segment_enum,
+            days=days,
+            limit=limit,
+            offset=offset,
+        )
+
+        return await service.get_price_history(filters)
+
     except HTTPException:
         raise
     except DatabaseError as e:

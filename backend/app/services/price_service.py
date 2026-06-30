@@ -108,45 +108,42 @@ class PriceService:
 
             if records:
                 latests_prices.append(
-                    PriceListResponseSchema.model_validate(records[0])
+                    PriceResponseSchema.model_validate(records[0])
                 )
 
-            logger.debug("latest_prices_fetched", component_count=len(latests_prices))
+        logger.debug("latest_prices_fetched", component_count=len(latests_prices))
+        return latests_prices
 
-            return latests_prices
+    async def get_market_overview(self) -> dict:
+        components = await self._repo.get_all_components()
 
-        async def get_market_overview(self) -> dict:
-
-            components = await self._repo.get_all_components()
-
-            overview = []
-            for component in components:
-                try:
-                    summary = await self._repo.get_price_summary(component, days=30)
-                    if summary:
-                        overview.append(summary)
-                except Exception as e:
-                    logger.warning(
+        overview = []
+        for component in components:
+            try:
+                summary = await self._repo.get_price_summary(component, days=30)
+                if summary:
+                    overview.append(summary)
+            except Exception as e:
+                logger.warning(
                     "summary_fetch_failed",
                     component=component,
                     error=str(e),
                 )
 
-                return {
-                    "components": [s.model_dump() for s in overview],
-                    "total_components": len(overview),
-                    "generated_at": datetime.now(timezone.utc).isoformat(),
-                }
+        return {
+            "components": [s.model_dump() for s in overview],
+            "total_components": len(overview),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+        }
 
-            async def _validate_price_business_rules(
-                    self,
-                    price_data: PriceCreateSchema,
-            ) -> None:
-                if float(price_data.price_value) < MIN_PRICE_VALUE:
-                    raise InvalidPriceError(
-                        value=float(price_data.price_value),
-                        reason=f"Price below minimum threshold ({MIN_PRICE_VALUE})",
-                    )
-                pass
+    async def _validate_price_business_rules(
+            self,
+            price_data: PriceCreateSchema,
+    ) -> None:
+        if float(price_data.price_value) < MIN_PRICE_VALUE:
+            raise InvalidPriceError(
+                value=float(price_data.price_value),
+                reason=f"Price below minimum threshold ({MIN_PRICE_VALUE})",
+            )
 
 

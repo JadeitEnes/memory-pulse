@@ -10,4 +10,4 @@ class BaseCollector(ABC):
 
     @property
     def source_name(self) -> str:
-        return self.__class__.name__    
+        return self.__class__.__name__

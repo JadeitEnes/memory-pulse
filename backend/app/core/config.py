@@ -50,6 +50,7 @@ class Settings(BaseSettings):
     )
 
     PRICE_COLLECTION_INTERVAL_MINUTES: int = 360
+    WS_BROADCAST_INTERVAL_SECONDS: float = 5.0
 
     @field_validator("ENVIRONMENT")
     @classmethod

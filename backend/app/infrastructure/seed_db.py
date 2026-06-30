@@ -21,8 +21,10 @@ async def seed_database() -> None:
         logger.error("seed_rejected_in_production")
         sys.exit(1)
 
+    engine = create_async_engine(settings.DATABASE_URL, echo=False)
+    session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
-    try: 
+    try:
         collector = SimulatedPriceCollector(seed=42)
         logger.info("generating_historical_prices")
         prices = await collector.collect_historical(hours_back=24 * 90)

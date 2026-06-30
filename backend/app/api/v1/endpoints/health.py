@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
-from fastapi import APIRouter
+
+from fastapi import APIRouter, HTTPException
+
 from app.core.config import get_settings
 from app.core.database import check_db_connection
 from app.core.logging import get_logger
@@ -8,9 +10,9 @@ router = APIRouter(tags=["Health"])
 logger = get_logger(__name__)
 settings = get_settings()
 
+
 @router.get("/health", summary="Basic liveness check")
 async def health_check():
-
     return {
         "status": "healthy",
         "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -18,9 +20,9 @@ async def health_check():
         "environment": settings.ENVIRONMENT,
     }
 
+
 @router.get("/health/ready", summary="Readiness check with dependencies")
 async def readiness_check():
-
     checks = {}
     overall_healthy = True
 
@@ -33,17 +35,14 @@ async def readiness_check():
         overall_healthy = False
         logger.warning("readiness_check_db_failed")
 
-        checks["redis"] = {"status": "not_checked", "type": "redis"}
+    checks["redis"] = {"status": "not_checked", "type": "redis"}
 
-        status_code = 200 if overall_healthy else 503
+    response = {
+        "status": "ready" if overall_healthy else "not_ready",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "checks": checks,
+    }
 
-        response = {
-            "status": "ready" if overall_healthy else "not_ready",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "checks": checks,
-        }
-
-        if not overall_healthy:
-            from fastapi import HTTPException
-            raise HTTPException (status_code=503, detail=response)
-        return response
+    if not overall_healthy:
+        raise HTTPException(status_code=503, detail=response)
+    return response
