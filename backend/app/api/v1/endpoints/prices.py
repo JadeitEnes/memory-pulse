@@ -1,3 +1,5 @@
+from typing import Any
+
 from app.api.dependencies import CacheDep, PriceServiceDep
 from app.core.config import get_settings
 from app.core.logging import get_logger
@@ -97,7 +99,7 @@ async def bulk_create_prices(
 async def get_latest_prices(
     service: PriceServiceDep,
     cache: CacheDep,
-) -> list[PriceResponseSchema]:
+) -> Any:
     try:
         cached = await cache.get(_CACHE_KEY_LATEST)
         if cached is not None:
@@ -125,7 +127,7 @@ async def get_price_summary(
     service: PriceServiceDep,
     cache: CacheDep,
     days: int = Query(default=30, ge=1, le=365, description="Number of past days"),
-) -> PriceSummarySchema:
+) -> Any:
     cache_key = f"{_CACHE_KEY_SUMMARY_PREFIX}:{component.upper()}:{days}"
     try:
         cached = await cache.get(cache_key)
@@ -220,7 +222,7 @@ async def get_price_history(
 async def get_market_overview(
     service: PriceServiceDep,
     cache: CacheDep,
-) -> dict:
+) -> Any:
     try:
         cached = await cache.get(_CACHE_KEY_OVERVIEW)
         if cached is not None:

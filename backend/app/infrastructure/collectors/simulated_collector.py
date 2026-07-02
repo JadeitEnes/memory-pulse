@@ -1,6 +1,7 @@
 import math
 import random
 from datetime import datetime, timezone
+from decimal import Decimal
 
 from app.core.logging import get_logger
 from app.domain.entities.enums import (
@@ -75,7 +76,7 @@ class SimulatedPriceCollector:
                 PriceCreateSchema(
                     component=MemoryComponent(component),
                     market_segment=config["segment"],
-                    price_value=price_value,
+                    price_value=Decimal(str(price_value)),
                     price_unit=config["unit"],
                     currency="USD",
                     data_source=DataSource.SIMULATED,
@@ -104,7 +105,7 @@ class SimulatedPriceCollector:
                     PriceCreateSchema(
                         component=MemoryComponent(component),
                         market_segment=config["segment"],
-                        price_value=price_value,
+                        price_value=Decimal(str(price_value)),
                         price_unit=config["unit"],
                         currency="USD",
                         data_source=DataSource.SIMULATED,

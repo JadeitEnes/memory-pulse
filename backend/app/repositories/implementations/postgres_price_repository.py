@@ -252,7 +252,7 @@ class PostgresPriceRepository(IPriceRepository):
                 price_unit=row.price_unit,
                 currency=row.currency,
                 price_change_pct=change_pct,
-                data_points=row.count,
+                data_points=row._mapping["count"],  # type: ignore[index]
                 last_updated=row.last_updated,
             )
 
@@ -280,7 +280,7 @@ class PostgresPriceRepository(IPriceRepository):
                 stmt = stmt.where(PriceRecord.component == component)
 
             result = await self._session.execute(stmt)
-            count = result.rowcount
+            count = result.rowcount  # type: ignore[attr-defined]
 
             logger.info(
                 "old_records_deleted",

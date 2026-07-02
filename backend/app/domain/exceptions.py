@@ -16,7 +16,7 @@ class DomainException(BaseAppException):
 class PriceNotFoundError(DomainException):
 
     def __init__(self, price_id: int | None = None, component: str | None = None):
-        details = {}
+        details: dict[str, str | int] = {}
         if price_id:
             details["price_id"] = price_id
         if component:
