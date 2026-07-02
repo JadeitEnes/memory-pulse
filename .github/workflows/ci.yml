@@ -53,7 +53,8 @@ jobs:
         env:
           ENVIRONMENT: development
           DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test
-          REDIS_URL: redis://localhost:6379/0
+          REDIS_BROKER_URL: redis://localhost:6379/0
+          REDIS_CACHE_URL: redis://localhost:6380/0
 
   docker-build:
     name: Docker Build Check
@@ -69,6 +70,6 @@ jobs:
           context: ./backend
           push: false
           target: development
-          tags: memory-intel-api:ci-${{ github.sha }}
+          tags: memory-pulse-api:ci-${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

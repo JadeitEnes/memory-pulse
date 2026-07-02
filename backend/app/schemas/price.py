@@ -154,8 +154,8 @@ class PriceFilterSchema(BaseModel):
         if self.start_date and self.end_date:
             if self.start_date >= self.end_date:
                 raise ValueError("start_date must be before end_date")
-            return self
-        
+        return self
+
 
 class PriceSummarySchema(BaseModel):
 

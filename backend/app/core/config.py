@@ -30,10 +30,12 @@ class Settings(BaseSettings):
     DB_MAX_OVERFLOW: int = 20
     DB_POOL_TIMEOUT: int = 30
 
-    REDIS_URL: str = "redis://localhost:6379/0"
+    REDIS_BROKER_URL: str = "redis://localhost:6379/0"
+    REDIS_CACHE_URL: str = "redis://localhost:6380/0"
 
     CACHE_TTL_PRICES: int = 300
     CACHE_TTL_MARKET_SUMMARY: int = 600
+    CACHE_TTL_SUMMARY: int = 600
 
     SECRET_KEY: str = Field(
         default="change-me-in-production-use-secrets-module"

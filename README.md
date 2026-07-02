@@ -1,103 +1,81 @@
-# 🧠 Memory Pulse
+# MemoryPulse
 
-## Memory Market Intelligence Platform
+**DRAM · NAND · AI Memory — Market Intelligence Platform**
 
-A backend platform designed to collect, store, and analyze memory semiconductor market data including DRAM, DDR4, DDR5, HBM, and NAND prices.
-
-Memory Pulse simulates a real-world market intelligence system by combining time-series databases, background job processing, containerized infrastructure, and automated quality pipelines.
+A full-stack market intelligence system that tracks, stores, and visualizes semiconductor memory prices — including DRAM, DDR5, HBM3, LPDDR5, and NAND — with real-time WebSocket updates and a React dashboard.
 
 ---
 
-## Why Memory Pulse?
+## Tech Stack
 
-The semiconductor market is heavily influenced by:
+**Backend** — Python 3.11, FastAPI (async), SQLAlchemy 2.x, Pydantic v2, Alembic
 
-* AI accelerator demand
-* Supply and demand fluctuations
-* Seasonal trends
-* Manufacturing cycles
+**Database** — TimescaleDB (PostgreSQL extension for time-series), hypertable partitioning
 
-Memory Pulse aims to transform raw memory pricing data into historical datasets and meaningful market insights.
+**Caching** — Redis dual-instance: broker (Celery, noeviction) + cache (API, allkeys-lru)
 
----
+**Background Jobs** — Celery + Redis, scheduled price collection every 6 hours
 
-## 🛠 Tech Stack
+**Frontend** — React 18, Vite, TypeScript, Recharts, TailwindCSS, WebSocket
 
-### Backend
-
-* Python 3.11
-* FastAPI
-* SQLAlchemy Async
-* Pydantic
-
-### Database
-
-* PostgreSQL
-* TimescaleDB
-* Alembic
-
-### Background Processing
-
-* Celery
-* Redis
-
-### Infrastructure
-
-* Docker & Docker Compose
-* GitHub Actions CI
-
-### Testing & Code Quality
-
-* Pytest
-* Black
-* Isort
-* Flake8
-* MyPy
+**Infrastructure** — Docker Compose (7 services), GitHub Actions CI
 
 ---
 
-## 🏗 Architecture
+## Architecture
 
-```text
-Data Collectors
-       |
-       ▼
-Celery Background Tasks
-       |
-       ▼
-Redis Message Broker
-       |
-       ▼
-FastAPI Application
-       |
-       ▼
-PostgreSQL + TimescaleDB
-       |
-       ▼
-Market Analytics
+```
+Simulated / HTTP Collectors
+           │
+    Celery Beat Scheduler (every 6h)
+           │
+    Celery Worker  ──── Redis Broker
+           │
+    FastAPI (async)  ── Redis Cache (7x latency improvement)
+           │
+    TimescaleDB (hypertable, chunk_interval: 7 days)
+           │
+    React Dashboard  ── WebSocket (live feed, 5s interval)
 ```
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
-docker compose up --build
+git clone <repo>
+cd memory-pulse
+
+docker compose up --build -d
+docker compose exec api alembic upgrade head
+docker compose exec api python -m app.infrastructure.seed_db
 ```
 
----
-
-## 🔮 Future Roadmap
-
-* Integrate real DRAM/NAND market data sources
-* Add market trend detection
-* Develop price forecasting models
-* Build analytics dashboard
-* Add alert and notification system
+API docs: http://localhost:8000/docs  
+Dashboard: http://localhost:5173  
+Health: http://localhost:8000/api/v1/health/ready
 
 ---
 
-## 👨‍💻 Author
+## Roadmap
 
-Developed by **Enes T.**
+- [x] FastAPI async backend with Repository pattern and DI
+- [x] TimescaleDB hypertable with composite primary key
+- [x] Celery distributed task queue with retry
+- [x] Redis dual-instance cache layer
+- [x] React dashboard with Recharts and WebSocket live feed
+- [ ] HTTP scraper (httpx async) with real DRAM/NAND sources
+- [ ] Price forecasting with Prophet / XGBoost
+- [ ] Anomaly detection and risk scoring
+- [ ] JWT authentication and rate limiting
+- [ ] Prometheus metrics and Nginx reverse proxy
 
+---
+
+## Copyright
+
+Copyright (c) 2026 **Enes T.** — All Rights Reserved.
+
+This project and its source code are the exclusive intellectual property of Enes T.
+Unauthorized use, copying, or distribution is prohibited.
+See [LICENSE](./LICENSE) for details.

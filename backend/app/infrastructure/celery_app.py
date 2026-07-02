@@ -8,8 +8,8 @@ settings = get_settings()
 def create_celery_app() -> Celery:
     app = Celery(
         "memory_pulse",
-        broker=settings.REDIS_URL,
-        backend=settings.REDIS_URL,
+        broker=settings.REDIS_BROKER_URL,
+        backend=settings.REDIS_BROKER_URL,
     )
 
     app.conf.update(

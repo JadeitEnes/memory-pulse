@@ -155,7 +155,6 @@ class PostgresPriceRepository(IPriceRepository):
             if filters.data_source:
                 stmt = stmt.where(PriceRecord.data_source == filters.data_source.value)
  
-            # Tarih aralığı hesapla
             if filters.start_date:
                 stmt = stmt.where(PriceRecord.recorded_at >= filters.start_date)
             elif filters.days:

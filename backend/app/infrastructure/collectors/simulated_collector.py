@@ -10,32 +10,51 @@ logger = get_logger(__name__)
 
 BASE_PRICES: dict[str, dict] = {
     MemoryComponent.DRAM.value: {
-        "base": 3.80, "unit": PriceUnit.USD_PER_GB,
-        "segment": MarketSegment.SERVER, "volatility": 0.08, "trend": 0.003,
+        "base": 3.80,
+        "unit": PriceUnit.USD_PER_GB,
+        "segment": MarketSegment.SERVER,
+        "volatility": 0.035,
+        "trend": 0.008,
     },
     MemoryComponent.DDR5.value: {
-        "base": 2.40, "unit": PriceUnit.USD_PER_GB,
-        "segment": MarketSegment.CONSUMER, "volatility": 0.05, "trend": -0.004
+        "base": 3.50,
+        "unit": PriceUnit.USD_PER_GB,
+        "segment": MarketSegment.CONSUMER,
+        "volatility": 0.030,
+        "trend": -0.010,
     },
     MemoryComponent.LPDDR5.value: {
-        "base": 6.80, "unit": PriceUnit.USD_PER_GB,
-        "segment": MarketSegment.MOBILE, "volatility": 0.07, "trend": 0.001, 
+        "base": 7.50,
+        "unit": PriceUnit.USD_PER_GB,
+        "segment": MarketSegment.MOBILE,
+        "volatility": 0.040,
+        "trend": 0.005,
     },
-    MemoryComponent.HBM3.value:{
-        "base": 28.50, "unit": PriceUnit.USD_PER_GB,
-        "segment": MarketSegment.AI_ACCELERATOR, "volatility": 0.13, "trend": 0.011,
+    MemoryComponent.HBM3.value: {
+        "base": 28.50,
+        "unit": PriceUnit.USD_PER_GB,
+        "segment": MarketSegment.AI_ACCELERATOR,
+        "volatility": 0.055,
+        "trend": 0.022,
     },
     MemoryComponent.NAND_TLC.value: {
-        "base": 0.070, "unit": PriceUnit.USD_PER_GB,
-        "segment": MarketSegment.ENTERPRISE_SSD, "volatility": 0.08, "trend": -0.002,
+        "base": 0.082,
+        "unit": PriceUnit.USD_PER_GB,
+        "segment": MarketSegment.ENTERPRISE_SSD,
+        "volatility": 0.045,
+        "trend": -0.007,
     },
     MemoryComponent.NAND_QLC.value: {
-        "base": 0.050, "unit": PriceUnit.USD_PER_GB,
-        "segment": MarketSegment.CONSUMER_SSD, "volatility": 0.10, "trend": -0.004,
+        "base": 0.058,
+        "unit": PriceUnit.USD_PER_GB,
+        "segment": MarketSegment.CONSUMER_SSD,
+        "volatility": 0.050,
+        "trend": -0.009,
     },
 }
 
 COLLECTION_INTERVAL_HOURS = 6
+
 
 class SimulatedPriceCollector:
 
@@ -47,7 +66,7 @@ class SimulatedPriceCollector:
         prices = []
         for component, config in BASE_PRICES.items():
             price_value = self._calculate_price(component, config, now)
-            price = PriceCreateSchema(
+            prices.append(PriceCreateSchema(
                 component=MemoryComponent(component),
                 market_segment=config["segment"],
                 price_value=price_value,
@@ -57,11 +76,9 @@ class SimulatedPriceCollector:
                 source_url=None,
                 recorded_at=now,
                 notes=f"Simulated price for {component}",
-            )
-            prices.append(price)
+            ))
         logger.info("simulated_prices_collected", count=len(prices))
         return prices
-
 
     async def collect_historical(self, hours_back: int = 24 * 90) -> list[PriceCreateSchema]:
         from datetime import timedelta
@@ -76,7 +93,7 @@ class SimulatedPriceCollector:
             timestamp = now - timedelta(hours=(steps - step) * COLLECTION_INTERVAL_HOURS)
             for component, config in BASE_PRICES.items():
                 price_value = self._calculate_price(component, config, timestamp)
-                price = PriceCreateSchema(
+                prices.append(PriceCreateSchema(
                     component=MemoryComponent(component),
                     market_segment=config["segment"],
                     price_value=price_value,
@@ -85,47 +102,34 @@ class SimulatedPriceCollector:
                     data_source=DataSource.SIMULATED,
                     recorded_at=timestamp,
                     notes="Historical simulated data",
-                )
-                prices.append(price)
+                ))
         logger.info("historical_data_generated", total_records=len(prices))
         return prices
 
-    def _calculate_price(self, component: str, config: dict, timestamp: datetime) -> float: 
+    def _calculate_price(self, component: str, config: dict, timestamp: datetime) -> float:
         epoch = datetime(2024, 1, 1, tzinfo=timezone.utc)
         hours_elapsed = (timestamp - epoch).total_seconds() / 3600
+        months_elapsed = hours_elapsed / (24 * 30.44)
 
-        trend_factor = 1.0 + config["trend"] * (hours_elapsed / 24)
+        trend_factor = max(1.0 + config["trend"] * months_elapsed, 0.40)
 
-        cycle_period_hours = 26280
-        cycle_phase = (2 * math.pi * hours_elapsed) / cycle_period_hours
-        cycle_factor = 1.0 + 0.15 * math.sin(cycle_phase)
+        cycle_phase = (2 * math.pi * months_elapsed) / 36
+        cycle_factor = 1.0 + 0.12 * math.sin(cycle_phase)
 
         month = timestamp.month
-        seasonal_factor = 1.0
         if month in (10, 11, 12):
             seasonal_factor = 1.04
         elif month in (1, 2):
             seasonal_factor = 0.97
-
-        ai_boost = 1.0
-        if component in (MemoryComponent.HBM3.value, MemoryComponent.HBM2E.value):
-            ai_months = max(0,(timestamp.year - 2023) * 12 + timestamp.month - 1)
-            ai_boost = 1.0 + 0.02 * ai_months
-        elif component == MemoryComponent.DRAM.value:
-            ai_months = max(0, (timestamp.year - 2023) * 12 + timestamp.month - 1)
-            ai_boost = 1.0 + 0.008 * ai_months
+        else:
+            seasonal_factor = 1.0
 
         noise_seed = hash(f"{component}_{hours_elapsed:.0f}") % 10000
         noise_rng = random.Random(noise_seed)
         noise = noise_rng.gauss(0, config["volatility"])
 
-        price = config["base"] * trend_factor * cycle_factor * seasonal_factor * ai_boost
+        price = config["base"] * trend_factor * cycle_factor * seasonal_factor
         price = price * (1 + noise)
-        price = max(price, config["base"] * 0.3)
+        price = max(price, config["base"] * 0.20)
 
         return round(price, 4)
-
-
-        
-
-                   

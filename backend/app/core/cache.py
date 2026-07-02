@@ -15,11 +15,10 @@ _redis_client: redis.Redis | None = None
 
 
 def get_redis_client() -> redis.Redis:
-   
     global _redis_client
     if _redis_client is None:
         _redis_client = redis.from_url(
-            settings.REDIS_URL,
+            settings.REDIS_CACHE_URL,
             decode_responses=True,
             max_connections=20,
         )
@@ -29,12 +28,11 @@ def get_redis_client() -> redis.Redis:
 async def close_redis_client() -> None:
     global _redis_client
     if _redis_client is not None:
-        await _redis_client.close()
+        await _redis_client.aclose()
         _redis_client = None
 
 
 def _json_default(obj: Any) -> Any:
-
     if isinstance(obj, Decimal):
         return str(obj)
     if isinstance(obj, datetime):
@@ -65,7 +63,6 @@ class RedisCache:
             logger.warning("cache_write_failed", key=key, error=str(e))
 
     async def delete_pattern(self, pattern: str) -> None:
-       
         try:
             keys = [k async for k in self._client.scan_iter(match=pattern)]
             if keys:

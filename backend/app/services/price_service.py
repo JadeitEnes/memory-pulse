@@ -131,7 +131,7 @@ class PriceService:
                 )
 
         return {
-            "components": [s.model_dump() for s in overview],
+            "components": [s.model_dump(mode="json") for s in overview],
             "total_components": len(overview),
             "generated_at": datetime.now(timezone.utc).isoformat(),
         }
