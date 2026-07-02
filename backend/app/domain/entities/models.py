@@ -56,8 +56,7 @@ class PriceRecord(Base):
         Index("ix_price_component_time", "component", "recorded_at"),
         Index("ix_price_source_time", "data_source", "recorded_at"),
         UniqueConstraint(
-            "component", "data_source", "recorded_at",
-            name="uq_price_component_source_time"
+            "component", "data_source", "recorded_at", name="uq_price_component_source_time"
         ),
     )
 
@@ -95,8 +94,7 @@ class MarketSummary(Base):
 
     __table_args__ = (
         UniqueConstraint(
-            "summary_date", "component", "market_segment",
-            name="uq_summary_date_component_segment"
+            "summary_date", "component", "market_segment", name="uq_summary_date_component_segment"
         ),
         Index("ix_summary_component_date", "component", "summary_date"),
     )

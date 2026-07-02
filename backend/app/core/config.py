@@ -3,6 +3,7 @@ from typing import Literal
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(
@@ -18,9 +19,7 @@ class Settings(BaseSettings):
     DEBUG: bool = False
 
     API_V1_PREFIX: str = "/api/v1"
-    ALLOWED_ORIGINS: list[str] = Field(
-        default=["http://localhost:3000", "http://localhost:5173"]
-    )
+    ALLOWED_ORIGINS: list[str] = Field(default=["http://localhost:3000", "http://localhost:5173"])
 
     DATABASE_URL: str = Field(
         default="postgresql+asyncpg://memory_user:memory_pass@localhost:5432/memory_pulse"
@@ -37,9 +36,7 @@ class Settings(BaseSettings):
     CACHE_TTL_MARKET_SUMMARY: int = 600
     CACHE_TTL_SUMMARY: int = 600
 
-    SECRET_KEY: str = Field(
-        default="change-me-in-production-use-secrets-module"
-    )
+    SECRET_KEY: str = Field(default="change-me-in-production-use-secrets-module")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24
 
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
@@ -48,8 +45,7 @@ class Settings(BaseSettings):
     SCRAPER_REQUEST_DELAY_SECONDS: float = 2.0
     SCRAPER_MAX_RETRIES: int = 3
     SCRAPER_TIMEOUT_SECONDS: int = 30
-    USER_AGENT: str = ("Mozilla/5.0 (compatible; MemoryPulseBot/1.0; +https://example.com/bot)"
-    )
+    USER_AGENT: str = "Mozilla/5.0 (compatible; MemoryPulseBot/1.0; +https://example.com/bot)"
 
     PRICE_COLLECTION_INTERVAL_MINUTES: int = 360
     WS_BROADCAST_INTERVAL_SECONDS: float = 5.0
@@ -58,16 +54,17 @@ class Settings(BaseSettings):
     @classmethod
     def validate_environment(cls, v: str) -> str:
         return v
-    
-    @property 
+
+    @property
     def is_production(self) -> bool:
         return self.ENVIRONMENT == "production"
-    
-    @property 
+
+    @property
     def is_development(self) -> bool:
         return self.ENVIRONMENT == "development"
-    
+
+
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
-        
+
     return Settings()

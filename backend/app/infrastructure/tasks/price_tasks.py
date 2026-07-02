@@ -1,10 +1,11 @@
-import asyncio 
+import asyncio
 from datetime import datetime, timezone
 
 from app.core.logging import get_logger
 from app.infrastructure.celery_app import celery_app
 
 logger = get_logger(__name__)
+
 
 @celery_app.task(
     name="app.infrastructure.tasks.price_tasks.collect_all_prices",
@@ -14,7 +15,6 @@ logger = get_logger(__name__)
     soft_time_limit=600,
     time_limit=600,
 )
-
 def collect_all_prices(self):
     task_id = self.request.id
     logger.info("price_collection_task_started", task_id=task_id)
@@ -24,8 +24,9 @@ def collect_all_prices(self):
         return result
     except Exception as exc:
         logger.error("price_collection_task_failed", error=str(exc))
-        raise self.retry(exc=exc, countdown=300 * (2 ** self.request.retries))
-    
+        raise self.retry(exc=exc, countdown=300 * (2**self.request.retries))
+
+
 async def _collect_prices_async() -> dict:
     from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
     from app.core.cache import RedisCache, get_redis_client
@@ -55,11 +56,12 @@ async def _collect_prices_async() -> dict:
     finally:
         await engine.dispose()
 
+
 @celery_app.task(
     name="app.infrastructure.tasks.price_tasks.generate_daily_summary",
-    bind=True, max_retries=2,
-)        
-
+    bind=True,
+    max_retries=2,
+)
 def generate_daily_summary(self):
     logger.info("daily_summary_task_started")
     try:
@@ -69,7 +71,8 @@ def generate_daily_summary(self):
     except Exception as exc:
         logger.error("daily_summary_task_failed", error=str(exc))
         raise self.retry(exc=exc, countdown=600)
-    
+
+
 async def _generate_summary_async() -> dict:
     from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
     from app.core.config import get_settings
@@ -79,7 +82,7 @@ async def _generate_summary_async() -> dict:
     settings = get_settings()
     engine = create_async_engine(settings.DATABASE_URL)
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
-    try: 
+    try:
         async with session_factory() as session:
             repo = PostgresPriceRepository(session=session)
             service = PriceService(price_repository=repo)
@@ -92,11 +95,11 @@ async def _generate_summary_async() -> dict:
     finally:
         await engine.dispose()
 
+
 @celery_app.task(
     name="app.infrastructure.tasks.price_tasks.cleanup_old_records",
     bind=True,
 )
-
 def cleanup_old_records(self):
     logger.info("cleanup_task_started")
     try:
@@ -106,7 +109,7 @@ def cleanup_old_records(self):
     except Exception as exc:
         logger.error("cleanup_task_failed", error=str(exc))
         raise self.retry(exc=exc)
-    
+
 
 async def _cleanup_async(older_than_days: int) -> dict:
     from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
@@ -123,6 +126,4 @@ async def _cleanup_async(older_than_days: int) -> dict:
             await session.commit()
         return {"deleted_records": deleted, "older_than_days": older_than_days}
     finally:
-        await engine.dispose()    
-
-
+        await engine.dispose()

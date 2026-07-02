@@ -15,38 +15,41 @@ setup_logging()
 logger = get_logger(__name__)
 settings = get_settings()
 
+
 async def _price_broadcaster_loop() -> None:
     from app.api.v1.endpoints.websocket import manager
     from app.core.database import AsyncSessionFactory
-    from app.repositories.implementations.postgres_price_repository import (PostgresPriceRepository,
+    from app.repositories.implementations.postgres_price_repository import (
+        PostgresPriceRepository,
     )
     from app.services.price_service import PriceService
 
-
- 
     while True:
         try:
             await asyncio.sleep(settings.WS_BROADCAST_INTERVAL_SECONDS)
- 
+
             if not manager.has_connections:
                 continue
- 
+
             async with AsyncSessionFactory() as session:
                 repo = PostgresPriceRepository(session=session)
                 service = PriceService(price_repository=repo)
                 latest = await service.get_latest_prices()
- 
-            await manager.broadcast({
-                "type": "price_update",
-                "data": [p.model_dump(mode="json") for p in latest],
-            })
+
+            await manager.broadcast(
+                {
+                    "type": "price_update",
+                    "data": [p.model_dump(mode="json") for p in latest],
+                }
+            )
             logger.debug("broadcast_sent", connections=manager.connection_count)
- 
+
         except asyncio.CancelledError:
             raise
         except Exception as e:
-            
+
             logger.error("broadcaster_loop_error", error=str(e))
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -57,8 +60,8 @@ async def lifespan(app: FastAPI):
         environment=settings.ENVIRONMENT,
     )
 
-
     from app.core.database import check_db_connection
+
     db_ok = await check_db_connection()
     if not db_ok:
         logger.error("startup_db_connection_failed")
@@ -81,6 +84,7 @@ async def lifespan(app: FastAPI):
         pass
 
     from app.core.database import engine
+
     await engine.dispose()
     await close_redis_client()
 
@@ -96,7 +100,6 @@ def create_application() -> FastAPI:
         redoc_url="/redoc" if not settings.is_production else None,
         openapi_url="/openapi.json" if not settings.is_production else None,
         lifespan=lifespan,
-  
     )
 
     app.add_middleware(
@@ -104,7 +107,7 @@ def create_application() -> FastAPI:
         allow_origins=settings.ALLOWED_ORIGINS,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        allow_headers=["*"]
+        allow_headers=["*"],
     )
 
     app.add_middleware(GZipMiddleware, minimum_size=1000)
@@ -129,7 +132,6 @@ def create_application() -> FastAPI:
 
     app.include_router(api_v1_router, prefix=settings.API_V1_PREFIX.replace("/v1", ""))
 
-
     @app.get("/", include_in_schema=False)
     async def root():
         return {
@@ -139,6 +141,7 @@ def create_application() -> FastAPI:
             "health": "/api/v1/health",
             "websocket": "/api/v1/ws/prices",
         }
+
     return app
 
 

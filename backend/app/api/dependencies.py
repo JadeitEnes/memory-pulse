@@ -13,13 +13,13 @@ from app.services.price_service import PriceService
 
 
 def get_price_repository(
-        db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ) -> IPriceRepository:
     return PostgresPriceRepository(session=db)
 
 
 def get_price_service(
-        repository: IPriceRepository = Depends(get_price_repository),
+    repository: IPriceRepository = Depends(get_price_repository),
 ) -> PriceService:
     return PriceService(price_repository=repository)
 

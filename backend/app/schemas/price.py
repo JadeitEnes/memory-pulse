@@ -4,12 +4,12 @@ from decimal import Decimal
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.domain.entities.enums import (
-
     DataSource,
     MarketSegment,
     MemoryComponent,
     PriceUnit,
 )
+
 
 class PriceCreateSchema(BaseModel):
 
@@ -30,7 +30,7 @@ class PriceCreateSchema(BaseModel):
         gt=0,
         le=Decimal("999999"),
         description="Price value in specified unit",
-        examples=[4.50, 0.065]
+        examples=[4.50, 0.065],
     )
 
     price_unit: PriceUnit = Field(
@@ -59,7 +59,7 @@ class PriceCreateSchema(BaseModel):
     )
 
     notes: str | None = Field(
-        default= None,
+        default=None,
         max_length=500,
         description="Optional notes about this price record",
     )
@@ -68,27 +68,32 @@ class PriceCreateSchema(BaseModel):
     @classmethod
     def validate_price_precision(cls, v: Decimal) -> Decimal:
         return round(v, 4)
-    
+
     @field_validator("recorded_at")
     @classmethod
     def validate_not_future(cls, v: datetime) -> datetime:
         from datetime import timezone
+
         now = datetime.now(timezone.utc)
         if v.tzinfo and v > now:
             raise ValueError("recorded_at cannot be in the future")
         return v
-    
-    model_config = {"json_schema_extra": {
-        "example":{
-            "component": "DRAM",
-            "market_segment": "SERVER",
-            "price_value": 4.50,
-            "price_unit": "USD_PER_GB",
-            "currency": "USD",
-            "data_source": "DRAMEXCHANGE",
-            "recorded_at": "2024-01-15T10:00:00Z",
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "component": "DRAM",
+                "market_segment": "SERVER",
+                "price_value": 4.50,
+                "price_unit": "USD_PER_GB",
+                "currency": "USD",
+                "data_source": "DRAMEXCHANGE",
+                "recorded_at": "2024-01-15T10:00:00Z",
+            }
         }
-    }}
+    }
+
+
 class PriceResponseSchema(BaseModel):
     id: int
     component: str
@@ -103,6 +108,7 @@ class PriceResponseSchema(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
 
 class PriceFilterSchema(BaseModel):
     component: MemoryComponent | None = Field(
@@ -119,15 +125,9 @@ class PriceFilterSchema(BaseModel):
         description="Filter by data source",
     )
 
-    start_date: datetime | None = Field(
-        default=None,
-        description="Start of time range (UTC)"
-    )
-    
-    end_date: datetime | None = Field(
-        default=None,
-        description="End of time range (UTC)"
-    )
+    start_date: datetime | None = Field(default=None, description="Start of time range (UTC)")
+
+    end_date: datetime | None = Field(default=None, description="End of time range (UTC)")
 
     days: int | None = Field(
         default=30,
@@ -175,6 +175,7 @@ class PriceSummarySchema(BaseModel):
 
     data_points: int = Field(description="Number of data points in period")
     last_updated: datetime
+
 
 class PriceListResponseSchema(BaseModel):
     items: list[PriceResponseSchema]

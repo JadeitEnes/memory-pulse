@@ -16,15 +16,16 @@ logger = get_logger(__name__)
 MAX_PRICE_CHANGE_PCT = 50.0
 MIN_PRICE_VALUE = 0.001
 
+
 class PriceService:
     def __init__(self, price_repository: IPriceRepository) -> None:
 
         self._repo = price_repository
 
     async def create_price_record(
-            self,
-            price_data: PriceCreateSchema,
-    )-> PriceResponseSchema:
+        self,
+        price_data: PriceCreateSchema,
+    ) -> PriceResponseSchema:
         logger.info(
             "creating_price_record",
             component=price_data.component.value,
@@ -43,9 +44,9 @@ class PriceService:
         return PriceResponseSchema.model_validate(record)
 
     async def bulk_create_price_records(
-            self,
-            prices: list[PriceCreateSchema],
-    ) -> dict[str,int]:
+        self,
+        prices: list[PriceCreateSchema],
+    ) -> dict[str, int]:
 
         if not prices:
             return {"saved": 0, "skipped": 0, "total": 0}
@@ -69,8 +70,8 @@ class PriceService:
         }
 
     async def get_price_history(
-            self,
-            filters: PriceFilterSchema,
+        self,
+        filters: PriceFilterSchema,
     ) -> PriceListResponseSchema:
         records = await self._repo.get_time_series(filters)
 
@@ -84,11 +85,11 @@ class PriceService:
             limit=filters.limit,
             offset=filters.offset,
         )
-    async def get_price_summary(
-            self,
-            component: str,
-            days: int = 30,
 
+    async def get_price_summary(
+        self,
+        component: str,
+        days: int = 30,
     ) -> PriceSummarySchema:
         logger.debug("fetching_price_summary", component=component, days=days)
 
@@ -107,9 +108,7 @@ class PriceService:
             records = await self._repo.get_latest_by_component(component, limit=1)
 
             if records:
-                latests_prices.append(
-                    PriceResponseSchema.model_validate(records[0])
-                )
+                latests_prices.append(PriceResponseSchema.model_validate(records[0]))
 
         logger.debug("latest_prices_fetched", component_count=len(latests_prices))
         return latests_prices
@@ -137,13 +136,11 @@ class PriceService:
         }
 
     async def _validate_price_business_rules(
-            self,
-            price_data: PriceCreateSchema,
+        self,
+        price_data: PriceCreateSchema,
     ) -> None:
         if float(price_data.price_value) < MIN_PRICE_VALUE:
             raise InvalidPriceError(
                 value=float(price_data.price_value),
                 reason=f"Price below minimum threshold ({MIN_PRICE_VALUE})",
             )
-
-

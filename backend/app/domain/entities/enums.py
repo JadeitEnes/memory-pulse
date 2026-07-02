@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class MemoryComponent(str, Enum):
 
     DRAM = "DRAM"
@@ -13,6 +14,7 @@ class MemoryComponent(str, Enum):
     NAND_QLC = "NAND_QLC"
     NAND_MLC = "NAND_MLC"
 
+
 class MarketSegment(str, Enum):
 
     SERVER = "SERVER"
@@ -23,10 +25,12 @@ class MarketSegment(str, Enum):
     ENTERPRISE_SSD = "ENTERPRISE_SSD"
     CONSUMER_SSD = "CONSUMER_SSD"
 
+
 class PriceUnit(str, Enum):
     USD_PER_GB = "USD_PER_GB"
     USD_PER_UNIT = "USD_PER_UNIT"
     USD_PER_WAFER = "USD_PER_WAFER"
+
 
 class DataSource(str, Enum):
     DRAMEXCHANGE = "DRAMEXCHANGE"
@@ -34,4 +38,4 @@ class DataSource(str, Enum):
     NEWEGG = "NEWEGG"
     AMAZON = "AMAZON"
     MANUAL = "MANUAL"
-    SIMULATED = "SIMULATED"    
+    SIMULATED = "SIMULATED"

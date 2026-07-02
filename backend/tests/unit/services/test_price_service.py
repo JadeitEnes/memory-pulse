@@ -99,9 +99,7 @@ class TestCreatePriceRecord:
 
 class TestGetPriceSummary:
 
-    async def test_existing_component_returns_summary(
-        self, price_service, mock_price_repository
-    ):
+    async def test_existing_component_returns_summary(self, price_service, mock_price_repository):
         expected = PriceSummarySchema(
             component="DRAM",
             market_segment="SERVER",

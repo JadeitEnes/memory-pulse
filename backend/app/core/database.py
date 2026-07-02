@@ -1,7 +1,7 @@
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
-from sqlalchemy.ext.asyncio import(
+from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
@@ -12,8 +12,10 @@ from app.core.config import get_settings
 
 settings = get_settings()
 
+
 class Base(DeclarativeBase):
     pass
+
 
 def create_engine():
     return create_async_engine(
@@ -25,6 +27,7 @@ def create_engine():
         echo=settings.is_development,
     )
 
+
 engine = create_engine()
 
 AsyncSessionFactory = async_sessionmaker(
@@ -34,6 +37,7 @@ AsyncSessionFactory = async_sessionmaker(
     autocommit=False,
     autoflush=False,
 )
+
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
@@ -48,8 +52,10 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         finally:
             await session.close()
 
+
 async def check_db_connection() -> bool:
     from sqlalchemy import text
+
     try:
         async with AsyncSessionFactory() as session:
             await session.execute(text("SELECT 1"))

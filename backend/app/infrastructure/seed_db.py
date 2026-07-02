@@ -7,6 +7,7 @@ from app.core.logging import get_logger, setup_logging
 setup_logging()
 logger = get_logger(__name__)
 
+
 async def seed_database() -> None:
     from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
     from app.infrastructure.collectors.simulated_collector import SimulatedPriceCollector
@@ -37,7 +38,7 @@ async def seed_database() -> None:
             service = PriceService(price_repository=repo)
 
             for i in range(0, len(prices), BATCH_SIZE):
-                batch = prices[i: i + BATCH_SIZE]
+                batch = prices[i : i + BATCH_SIZE]
                 result = await service.bulk_create_price_records(batch)
                 total_saved += result["saved"]
                 logger.info("seed_batch_progress", batch=i // BATCH_SIZE + 1, saved=result["saved"])
@@ -48,9 +49,6 @@ async def seed_database() -> None:
     finally:
         await engine.dispose()
 
+
 if __name__ == "__main__":
     asyncio.run(seed_database())
-
-
-                    
-

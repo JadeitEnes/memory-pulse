@@ -5,6 +5,7 @@ import structlog
 
 from app.core.config import get_settings
 
+
 def setup_logging() -> None:
 
     settings = get_settings()
@@ -26,7 +27,10 @@ def setup_logging() -> None:
         renderer = structlog.dev.ConsoleRenderer(colors=True)
 
     structlog.configure(
-        processors=shared_processors + [structlog.stdlib.ProcessorFormatter.wrap_for_formatter,],
+        processors=shared_processors
+        + [
+            structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+        ],
         logger_factory=structlog.stdlib.LoggerFactory(),
         wrapper_class=structlog.stdlib.BoundLogger,
         cache_logger_on_first_use=True,
@@ -43,15 +47,14 @@ def setup_logging() -> None:
     root_logger = logging.getLogger()
     root_logger.handlers.clear()
     root_logger.addHandler(handler)
-    root_logger.setLevel(log_level)       
+    root_logger.setLevel(log_level)
 
     logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
     logging.getLogger("sqlalchemy.engine").setLevel(
         logging.DEBUG if settings.is_development else logging.WARNING
     )
 
+
 def get_logger(name: str = __name__) -> structlog.stdlib.BoundLogger:
 
     return structlog.get_logger(name)
-
-    

@@ -66,17 +66,19 @@ class SimulatedPriceCollector:
         prices = []
         for component, config in BASE_PRICES.items():
             price_value = self._calculate_price(component, config, now)
-            prices.append(PriceCreateSchema(
-                component=MemoryComponent(component),
-                market_segment=config["segment"],
-                price_value=price_value,
-                price_unit=config["unit"],
-                currency="USD",
-                data_source=DataSource.SIMULATED,
-                source_url=None,
-                recorded_at=now,
-                notes=f"Simulated price for {component}",
-            ))
+            prices.append(
+                PriceCreateSchema(
+                    component=MemoryComponent(component),
+                    market_segment=config["segment"],
+                    price_value=price_value,
+                    price_unit=config["unit"],
+                    currency="USD",
+                    data_source=DataSource.SIMULATED,
+                    source_url=None,
+                    recorded_at=now,
+                    notes=f"Simulated price for {component}",
+                )
+            )
         logger.info("simulated_prices_collected", count=len(prices))
         return prices
 
@@ -93,16 +95,18 @@ class SimulatedPriceCollector:
             timestamp = now - timedelta(hours=(steps - step) * COLLECTION_INTERVAL_HOURS)
             for component, config in BASE_PRICES.items():
                 price_value = self._calculate_price(component, config, timestamp)
-                prices.append(PriceCreateSchema(
-                    component=MemoryComponent(component),
-                    market_segment=config["segment"],
-                    price_value=price_value,
-                    price_unit=config["unit"],
-                    currency="USD",
-                    data_source=DataSource.SIMULATED,
-                    recorded_at=timestamp,
-                    notes="Historical simulated data",
-                ))
+                prices.append(
+                    PriceCreateSchema(
+                        component=MemoryComponent(component),
+                        market_segment=config["segment"],
+                        price_value=price_value,
+                        price_unit=config["unit"],
+                        currency="USD",
+                        data_source=DataSource.SIMULATED,
+                        recorded_at=timestamp,
+                        notes="Historical simulated data",
+                    )
+                )
         logger.info("historical_data_generated", total_records=len(prices))
         return prices
 

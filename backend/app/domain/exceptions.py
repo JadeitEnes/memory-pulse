@@ -6,10 +6,7 @@ class BaseAppException(Exception):
         super().__init__(message)
 
     def __repr__(self) -> str:
-        return (
-            f"{self.__class__.__name__}("
-            f"message={self.message!r}, details={self.details})"
-        )
+        return f"{self.__class__.__name__}(" f"message={self.message!r}, details={self.details})"
 
 
 class DomainException(BaseAppException):
@@ -18,9 +15,7 @@ class DomainException(BaseAppException):
 
 class PriceNotFoundError(DomainException):
 
-    def __init__(
-        self, price_id: int | None = None, component: str | None = None
-    ):
+    def __init__(self, price_id: int | None = None, component: str | None = None):
         details = {}
         if price_id:
             details["price_id"] = price_id

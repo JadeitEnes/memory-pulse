@@ -17,64 +17,63 @@ from app.schemas.price import (
 
 logger = get_logger(__name__)
 
+
 class PostgresPriceRepository(IPriceRepository):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
     async def save(self, price_data: PriceCreateSchema) -> int:
-            try:
-                stmt = (
-                     pg_insert(PriceRecord)
-                     .values(
-                          component=price_data.component.value,
-                          market_segment=price_data.market_segment.value,
-                          price_value=price_data.price_value,
-                          price_unit=price_data.price_unit.value,
-                          currency=price_data.currency,
-                          data_source=price_data.data_source.value,
-                          source_url=price_data.source_url,
-                          recorded_at=price_data.recorded_at,
-                          notes=price_data.notes,
-                     )
-                     .on_conflict_do_nothing(
-                          constraint="uq_price_component_source_time"
-                     )
-                     .returning(PriceRecord.id)
+        try:
+            stmt = (
+                pg_insert(PriceRecord)
+                .values(
+                    component=price_data.component.value,
+                    market_segment=price_data.market_segment.value,
+                    price_value=price_data.price_value,
+                    price_unit=price_data.price_unit.value,
+                    currency=price_data.currency,
+                    data_source=price_data.data_source.value,
+                    source_url=price_data.source_url,
+                    recorded_at=price_data.recorded_at,
+                    notes=price_data.notes,
                 )
+                .on_conflict_do_nothing(constraint="uq_price_component_source_time")
+                .returning(PriceRecord.id)
+            )
 
-                result = await self._session.execute(stmt)
-                row = result.fetchone()
+            result = await self._session.execute(stmt)
+            row = result.fetchone()
 
-                if row is None:
-                     logger.warning(
-                          "duplicate_price_skipped",
-                          component=price_data.component.value,
-                          source=price_data.data_source.value,
-                          recorded_at=str(price_data.recorded_at),
-                     )
-                     raise DuplicatePriceError(
-                          component=price_data.component.value,
-                          source=price_data.data_source.value,
-                     )
-                price_id = row[0]
-                logger.info(
-                     "price_saved",
-                     price_id=price_id,
-                     component=price_data.component.value,
-                     value=str(price_data.price_value),
+            if row is None:
+                logger.warning(
+                    "duplicate_price_skipped",
+                    component=price_data.component.value,
+                    source=price_data.data_source.value,
+                    recorded_at=str(price_data.recorded_at),
                 )
-                return price_id
-            except DuplicatePriceError:
-                 raise
-            except Exception as e:
-                 logger.error("price_save_failed", error=str(e))
-                 raise DatabaseError(f"Failed to save price record: {e}")
-            
+                raise DuplicatePriceError(
+                    component=price_data.component.value,
+                    source=price_data.data_source.value,
+                )
+            price_id = row[0]
+            logger.info(
+                "price_saved",
+                price_id=price_id,
+                component=price_data.component.value,
+                value=str(price_data.price_value),
+            )
+            return price_id
+        except DuplicatePriceError:
+            raise
+        except Exception as e:
+            logger.error("price_save_failed", error=str(e))
+            raise DatabaseError(f"Failed to save price record: {e}")
+
     async def save_batch(self, prices: list[PriceCreateSchema]) -> int:
-        
+
         if not prices:
             return 0
- 
+
         try:
             values = [
                 {
@@ -90,127 +89,129 @@ class PostgresPriceRepository(IPriceRepository):
                 }
                 for p in prices
             ]
- 
+
             stmt = (
                 pg_insert(PriceRecord)
                 .values(values)
                 .on_conflict_do_nothing(constraint="uq_price_component_source_time")
                 .returning(PriceRecord.id)
             )
- 
+
             result = await self._session.execute(stmt)
             inserted_ids = result.fetchall()
             count = len(inserted_ids)
- 
+
             logger.info("batch_prices_saved", count=count, total_attempted=len(prices))
             return count
- 
+
         except Exception as e:
             logger.error("batch_save_failed", error=str(e), count=len(prices))
             raise DatabaseError(f"Batch price save failed: {e}") from e
-    
+
     async def get_by_id(self, price_id: int) -> dict | None:
-         
-         try:
-              stmt = select(PriceRecord).where(PriceRecord.id == price_id)
-              result = await self._session.execute(stmt)
-              record = result.scalar_one_or_none()
-              return self._to_dict(record) if record else None
-         except Exception as e:
-              raise DatabaseError(f"Failed to get price by id: {e}") from e
+
+        try:
+            stmt = select(PriceRecord).where(PriceRecord.id == price_id)
+            result = await self._session.execute(stmt)
+            record = result.scalar_one_or_none()
+            return self._to_dict(record) if record else None
+        except Exception as e:
+            raise DatabaseError(f"Failed to get price by id: {e}") from e
 
     async def get_latest_by_component(
-              self,
-              component: str,
-              limit: int = 1,
+        self,
+        component: str,
+        limit: int = 1,
     ) -> list[dict]:
-         
-         try:
-              stmt = (
-                   select(PriceRecord)
-                   .where(PriceRecord.component == component)
-                   .order_by(PriceRecord.recorded_at.desc())
-                   .limit(limit)
-              )
 
-              result = await self._session.execute(stmt)
-              records = result.scalars().all()
-              return [self._to_dict(r) for r in records]
-         except Exception as e:
-              raise DatabaseError(f"Failed to get latest prices: {e}") from e
-         
+        try:
+            stmt = (
+                select(PriceRecord)
+                .where(PriceRecord.component == component)
+                .order_by(PriceRecord.recorded_at.desc())
+                .limit(limit)
+            )
+
+            result = await self._session.execute(stmt)
+            records = result.scalars().all()
+            return [self._to_dict(r) for r in records]
+        except Exception as e:
+            raise DatabaseError(f"Failed to get latest prices: {e}") from e
+
     async def get_time_series(self, filters: PriceFilterSchema) -> list[dict]:
-       
+
         try:
             stmt = select(PriceRecord)
- 
+
             if filters.component:
                 stmt = stmt.where(PriceRecord.component == filters.component.value)
- 
+
             if filters.market_segment:
-                stmt = stmt.where(
-                    PriceRecord.market_segment == filters.market_segment.value
-                )
- 
+                stmt = stmt.where(PriceRecord.market_segment == filters.market_segment.value)
+
             if filters.data_source:
                 stmt = stmt.where(PriceRecord.data_source == filters.data_source.value)
- 
+
             if filters.start_date:
                 stmt = stmt.where(PriceRecord.recorded_at >= filters.start_date)
             elif filters.days:
                 cutoff = datetime.now(timezone.utc) - timedelta(days=filters.days)
                 stmt = stmt.where(PriceRecord.recorded_at >= cutoff)
- 
+
             if filters.end_date:
                 stmt = stmt.where(PriceRecord.recorded_at <= filters.end_date)
- 
+
             stmt = (
-                stmt
-                .order_by(PriceRecord.recorded_at.asc())
+                stmt.order_by(PriceRecord.recorded_at.asc())
                 .offset(filters.offset)
                 .limit(filters.limit)
             )
- 
+
             result = await self._session.execute(stmt)
             records = result.scalars().all()
             return [self._to_dict(r) for r in records]
- 
+
         except Exception as e:
             raise DatabaseError(f"Failed to get time series: {e}") from e
-        
+
     async def get_price_summary(
         self,
         component: str,
         days: int = 30,
     ) -> PriceSummarySchema | None:
-         
-         try:
+
+        try:
             cutoff = datetime.now(timezone.utc) - timedelta(days=days)
- 
-            stmt = select(
-                func.avg(PriceRecord.price_value).label("avg_price"),
-                func.min(PriceRecord.price_value).label("min_price"),
-                func.max(PriceRecord.price_value).label("max_price"),
-                func.count(PriceRecord.id).label("count"),
-                func.max(PriceRecord.recorded_at).label("last_updated"),
-                PriceRecord.price_unit,
-                PriceRecord.market_segment,
-                PriceRecord.currency,
-            ).where(
-                PriceRecord.component == component,
-                PriceRecord.recorded_at >= cutoff,
-            ).group_by(
-                PriceRecord.price_unit,
-                PriceRecord.market_segment,
-                PriceRecord.currency,
-            ).limit(1)  
- 
+
+            stmt = (
+                select(
+                    func.avg(PriceRecord.price_value).label("avg_price"),
+                    func.min(PriceRecord.price_value).label("min_price"),
+                    func.max(PriceRecord.price_value).label("max_price"),
+                    func.count(PriceRecord.id).label("count"),
+                    func.max(PriceRecord.recorded_at).label("last_updated"),
+                    PriceRecord.price_unit,
+                    PriceRecord.market_segment,
+                    PriceRecord.currency,
+                )
+                .where(
+                    PriceRecord.component == component,
+                    PriceRecord.recorded_at >= cutoff,
+                )
+                .group_by(
+                    PriceRecord.price_unit,
+                    PriceRecord.market_segment,
+                    PriceRecord.currency,
+                )
+                .limit(1)
+            )
+
             result = await self._session.execute(stmt)
             row = result.fetchone()
 
             if not row or row.count == 0:
                 return None
-            
+
             latest_stmt = (
                 select(PriceRecord.price_value)
                 .where(
@@ -256,22 +257,21 @@ class PostgresPriceRepository(IPriceRepository):
                 last_updated=row.last_updated,
             )
 
-         except Exception as e:
-             raise DatabaseError(f"Failed to get price summary: {e}") from e
+        except Exception as e:
+            raise DatabaseError(f"Failed to get price summary: {e}") from e
 
-    async def  get_all_components(self) -> list[str]:
+    async def get_all_components(self) -> list[str]:
         try:
             stmt = select(PriceRecord.component).distinct().order_by(PriceRecord.component)
             result = await self._session.execute(stmt)
             return [row[0] for row in result.fetchall()]
         except Exception as e:
             raise DatabaseError(f"Failed to get components: {e}") from e
-        
-    async def delete_old_records(
-            self,
-            older_than_days: int,
-            component: str | None = None,
 
+    async def delete_old_records(
+        self,
+        older_than_days: int,
+        component: str | None = None,
     ) -> int:
         try:
             cutoff = datetime.now(timezone.utc) - timedelta(days=older_than_days)
@@ -308,23 +308,5 @@ class PostgresPriceRepository(IPriceRepository):
             "recorded_at": record.recorded_at,
             "is_validated": record.is_validated,
             "notes": record.notes,
-            "created_at": record.created_at, 
-        }        
-         
-        
-              
-              
-             
-             
-             
-
-                   
-                           
-
-
-         
-                
-            
-            
-
-             
+            "created_at": record.created_at,
+        }
