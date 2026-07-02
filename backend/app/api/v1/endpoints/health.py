@@ -1,11 +1,10 @@
 from datetime import datetime, timezone
 
 import redis.asyncio as aioredis
-from fastapi import APIRouter, HTTPException
-
 from app.core.config import get_settings
 from app.core.database import check_db_connection
 from app.core.logging import get_logger
+from fastapi import APIRouter, HTTPException
 
 router = APIRouter(tags=["Health"])
 logger = get_logger(__name__)

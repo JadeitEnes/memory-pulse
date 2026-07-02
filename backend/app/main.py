@@ -1,15 +1,14 @@
 import asyncio
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import JSONResponse
-
 from app.api.v1.router import api_v1_router
 from app.core.cache import close_redis_client
 from app.core.config import get_settings
 from app.core.logging import get_logger, setup_logging
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.responses import JSONResponse
 
 setup_logging()
 logger = get_logger(__name__)

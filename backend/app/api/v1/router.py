@@ -1,6 +1,5 @@
-from fastapi import APIRouter
-
 from app.api.v1.endpoints import health, prices, websocket
+from fastapi import APIRouter
 
 api_v1_router = APIRouter(prefix="/v1")
 

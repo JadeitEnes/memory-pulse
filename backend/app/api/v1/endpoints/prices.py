@@ -1,6 +1,3 @@
-from fastapi import APIRouter, HTTPException, Query, status
-from fastapi.responses import JSONResponse
-
 from app.api.dependencies import CacheDep, PriceServiceDep
 from app.core.config import get_settings
 from app.core.logging import get_logger
@@ -18,6 +15,8 @@ from app.schemas.price import (
     PriceResponseSchema,
     PriceSummarySchema,
 )
+from fastapi import APIRouter, HTTPException, Query, status
+from fastapi.responses import JSONResponse
 
 router = APIRouter(prefix="/prices", tags=["Prices"])
 logger = get_logger(__name__)
@@ -188,7 +187,7 @@ async def get_price_history(
             except ValueError:
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Invalid component: {component}. Valid: {[e.value for e in MemoryComponent]}",
+                    detail=f"Invalid component: {component}. Valid: {[e.value for e in MemoryComponent]}",  # noqa: E501
                 )
 
         segment_enum = None

@@ -28,12 +28,16 @@ def collect_all_prices(self):
 
 
 async def _collect_prices_async() -> dict:
-    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
     from app.core.cache import RedisCache, get_redis_client
     from app.core.config import get_settings
-    from app.infrastructure.collectors.simulated_collector import SimulatedPriceCollector
-    from app.repositories.implementations.postgres_price_repository import PostgresPriceRepository
+    from app.infrastructure.collectors.simulated_collector import (
+        SimulatedPriceCollector,
+    )
+    from app.repositories.implementations.postgres_price_repository import (
+        PostgresPriceRepository,
+    )
     from app.services.price_service import PriceService
+    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
     settings = get_settings()
     engine = create_async_engine(settings.DATABASE_URL, pool_pre_ping=True)
@@ -74,10 +78,12 @@ def generate_daily_summary(self):
 
 
 async def _generate_summary_async() -> dict:
-    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
     from app.core.config import get_settings
-    from app.repositories.implementations.postgres_price_repository import PostgresPriceRepository
+    from app.repositories.implementations.postgres_price_repository import (
+        PostgresPriceRepository,
+    )
     from app.services.price_service import PriceService
+    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
     settings = get_settings()
     engine = create_async_engine(settings.DATABASE_URL)
@@ -112,9 +118,11 @@ def cleanup_old_records(self):
 
 
 async def _cleanup_async(older_than_days: int) -> dict:
-    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
     from app.core.config import get_settings
-    from app.repositories.implementations.postgres_price_repository import PostgresPriceRepository
+    from app.repositories.implementations.postgres_price_repository import (
+        PostgresPriceRepository,
+    )
+    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
     settings = get_settings()
     engine = create_async_engine(settings.DATABASE_URL)

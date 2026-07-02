@@ -1,8 +1,5 @@
 from typing import Annotated
 
-from fastapi import Depends
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.cache import RedisCache, get_redis_client
 from app.core.database import get_db
 from app.repositories.implementations.postgres_price_repository import (
@@ -10,6 +7,8 @@ from app.repositories.implementations.postgres_price_repository import (
 )
 from app.repositories.interfaces.price_repository import IPriceRepository
 from app.services.price_service import PriceService
+from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def get_price_repository(

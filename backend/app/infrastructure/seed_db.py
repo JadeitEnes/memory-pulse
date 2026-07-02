@@ -9,10 +9,14 @@ logger = get_logger(__name__)
 
 
 async def seed_database() -> None:
-    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-    from app.infrastructure.collectors.simulated_collector import SimulatedPriceCollector
-    from app.repositories.implementations.postgres_price_repository import PostgresPriceRepository
+    from app.infrastructure.collectors.simulated_collector import (
+        SimulatedPriceCollector,
+    )
+    from app.repositories.implementations.postgres_price_repository import (
+        PostgresPriceRepository,
+    )
     from app.services.price_service import PriceService
+    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
     settings = get_settings()
 

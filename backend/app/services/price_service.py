@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
 from app.core.logging import get_logger
-from app.domain.exceptions import InvalidPriceError, PriceNotFoundError, ValidationError
+from app.domain.exceptions import InvalidPriceError, PriceNotFoundError
 from app.repositories.interfaces.price_repository import IPriceRepository
 from app.schemas.price import (
     PriceCreateSchema,

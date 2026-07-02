@@ -3,7 +3,12 @@ import random
 from datetime import datetime, timezone
 
 from app.core.logging import get_logger
-from app.domain.entities.enums import DataSource, MarketSegment, MemoryComponent, PriceUnit
+from app.domain.entities.enums import (
+    DataSource,
+    MarketSegment,
+    MemoryComponent,
+    PriceUnit,
+)
 from app.schemas.price import PriceCreateSchema
 
 logger = get_logger(__name__)

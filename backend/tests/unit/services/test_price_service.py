@@ -3,8 +3,12 @@ from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
-from app.domain.entities.enums import DataSource, MarketSegment, MemoryComponent, PriceUnit
+from app.domain.entities.enums import (
+    DataSource,
+    MarketSegment,
+    MemoryComponent,
+    PriceUnit,
+)
 from app.domain.exceptions import DuplicatePriceError, PriceNotFoundError
 from app.schemas.price import PriceCreateSchema, PriceResponseSchema, PriceSummarySchema
 from app.services.price_service import PriceService

@@ -1,6 +1,4 @@
 from abc import ABC, abstractmethod
-from datetime import datetime
-from decimal import Decimal
 
 from app.schemas.price import PriceCreateSchema, PriceFilterSchema, PriceSummarySchema
 
@@ -28,6 +26,7 @@ class IPriceRepository(ABC):
         self,
         filters: PriceFilterSchema,
     ) -> list[dict]: ...
+
     @abstractmethod
     async def get_price_summary(
         self,

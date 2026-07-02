@@ -1,14 +1,13 @@
 from datetime import datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, Field, field_validator, model_validator
-
 from app.domain.entities.enums import (
     DataSource,
     MarketSegment,
     MemoryComponent,
     PriceUnit,
 )
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class PriceCreateSchema(BaseModel):
