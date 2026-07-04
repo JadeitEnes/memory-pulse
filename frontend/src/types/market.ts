@@ -47,3 +47,19 @@ export interface ChartPoint {
 export type WsMessage =
   | { type: "price_update"; data: PriceRecord[] }
   | { type: "connected" };
+
+export interface ForecastPoint {
+  date: string;
+  predicted: string;
+  lower: string;
+  upper: string;
+}
+
+export interface ForecastResponse {
+  component: string;
+  generated_at: string;
+  horizon_days: number;
+  historical_days: number;
+  model: string;
+  forecast: ForecastPoint[];
+}

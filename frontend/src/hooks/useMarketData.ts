@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import type { ChartPoint, MarketOverview, PriceHistory } from "../types/market";
+import type { ChartPoint, ForecastResponse, MarketOverview, PriceHistory } from "../types/market";
 
 const API = "/api/v1";
 
@@ -63,4 +63,30 @@ export function usePriceHistory(component: string, days: number) {
   }, [component, days]);
 
   return { points, loading, error };
+}
+
+export function useForecast(component: string, horizon: number) {
+  const [data, setData] = useState<ForecastResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!component) return;
+    setLoading(true);
+    setData(null);
+
+    fetch(`${API}/forecasts/${encodeURIComponent(component)}?horizon=${horizon}`)
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json() as Promise<ForecastResponse>;
+      })
+      .then((d) => {
+        setData(d);
+        setError(null);
+      })
+      .catch((e) => setError(e instanceof Error ? e.message : "Unknown error"))
+      .finally(() => setLoading(false));
+  }, [component, horizon]);
+
+  return { data, loading, error };
 }
