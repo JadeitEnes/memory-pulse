@@ -30,12 +30,14 @@ def collect_all_prices(self):
 async def _collect_prices_async() -> dict:
     from app.core.cache import RedisCache, get_redis_client
     from app.core.config import get_settings
+    from app.infrastructure.collectors.newegg_collector import NeweggCollector
     from app.infrastructure.collectors.simulated_collector import (
         SimulatedPriceCollector,
     )
     from app.repositories.implementations.postgres_price_repository import (
         PostgresPriceRepository,
     )
+    from app.schemas.price import PriceCreateSchema
     from app.services.price_service import PriceService
     from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
@@ -44,8 +46,21 @@ async def _collect_prices_async() -> dict:
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
     try:
-        collector = SimulatedPriceCollector()
-        prices = await collector.collect()
+        # Run simulated + Newegg collectors concurrently.
+        # If Newegg fails (blocked, timeout) we continue with simulated only.
+        simulated_task = asyncio.create_task(SimulatedPriceCollector().collect())
+        newegg_task = asyncio.create_task(_safe_collect(NeweggCollector()))
+
+        simulated_prices, newegg_prices = await asyncio.gather(simulated_task, newegg_task)
+
+        prices: list[PriceCreateSchema] = simulated_prices + newegg_prices
+        logger.info(
+            "collectors_done",
+            simulated=len(simulated_prices),
+            newegg=len(newegg_prices),
+            total=len(prices),
+        )
+
         async with session_factory() as session:
             repo = PostgresPriceRepository(session=session)
             service = PriceService(price_repository=repo)
@@ -55,10 +70,24 @@ async def _collect_prices_async() -> dict:
         cache = RedisCache(client=get_redis_client())
         await cache.delete_pattern("mp:prices:*")
         await cache.delete_pattern("mp:market:*")
+        await cache.delete_pattern("mp:forecast:*")  # stale forecasts after new data
 
         return result
     finally:
         await engine.dispose()
+
+
+async def _safe_collect(collector) -> list:  # type: ignore[type-arg]
+    """Run a collector and return empty list on any exception (graceful fallback)."""
+    try:
+        return await collector.collect()
+    except Exception as exc:
+        logger.warning(
+            "collector_failed_using_fallback",
+            collector=collector.source_name,
+            error=str(exc),
+        )
+        return []
 
 
 @celery_app.task(
