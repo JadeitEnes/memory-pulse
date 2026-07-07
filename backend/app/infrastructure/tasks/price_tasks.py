@@ -2,6 +2,7 @@ import asyncio
 from datetime import datetime, timezone
 
 from app.core.logging import get_logger
+from app.core.metrics import prices_collected_total, scraper_errors_total
 from app.infrastructure.celery_app import celery_app
 
 logger = get_logger(__name__)
@@ -62,6 +63,11 @@ async def _collect_prices_async() -> dict:
             total=len(prices),
         )
 
+        for p in simulated_prices:
+            prices_collected_total.labels(component=p.component.value, source="simulated").inc()
+        for p in newegg_prices:
+            prices_collected_total.labels(component=p.component.value, source="newegg").inc()
+
         async with session_factory() as session:
             repo = PostgresPriceRepository(session=session)
             service = PriceService(price_repository=repo)
@@ -79,7 +85,6 @@ async def _collect_prices_async() -> dict:
 
 
 async def _safe_collect(collector) -> list:  # type: ignore[type-arg]
-    """Run a collector and return empty list on any exception (graceful fallback)."""
     try:
         return await collector.collect()
     except Exception as exc:
@@ -88,6 +93,7 @@ async def _safe_collect(collector) -> list:  # type: ignore[type-arg]
             collector=collector.source_name,
             error=str(exc),
         )
+        scraper_errors_total.labels(scraper=collector.source_name).inc()
         return []
 
 

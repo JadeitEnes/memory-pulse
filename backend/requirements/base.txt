@@ -28,3 +28,5 @@ lxml==5.2.2
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 slowapi==0.1.9
+prometheus-fastapi-instrumentator==7.0.0
+flower==2.0.1

@@ -151,10 +151,76 @@ services:
     restart: unless-stopped
     command: sh -c "npm install && npm run dev"
 
+  flower:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: memory_pulse_flower
+    environment:
+      - REDIS_BROKER_URL=redis://redis-broker:6379/0
+    ports:
+      - "5555:5555"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      redis-broker:
+        condition: service_healthy
+    networks:
+      - memory_net
+    restart: unless-stopped
+    command: >
+      celery -A app.infrastructure.celery_app flower
+      --port=5555
+      --broker=redis://redis-broker:6379/0
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: memory_pulse_prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+      - "--web.enable-lifecycle"
+    depends_on:
+      - api
+    networks:
+      - memory_net
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: memory_pulse_grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./docker/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    networks:
+      - memory_net
+    restart: unless-stopped
+
 volumes:
   postgres_data:
     driver: local
   redis_broker_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
     driver: local
 
 networks:

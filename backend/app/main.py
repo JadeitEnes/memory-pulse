@@ -5,6 +5,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
+from prometheus_fastapi_instrumentator import Instrumentator
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -141,6 +142,11 @@ def create_application() -> FastAPI:
         )
 
     app.include_router(api_v1_router, prefix=settings.API_V1_PREFIX.replace("/v1", ""))
+
+    Instrumentator(
+        should_group_status_codes=False,
+        excluded_handlers=["/metrics", "/health", "/"],
+    ).instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
 
     @app.get("/", include_in_schema=False)
     async def root():
