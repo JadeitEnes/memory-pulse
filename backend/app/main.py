@@ -4,8 +4,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import JSONResponse
-from prometheus_fastapi_instrumentator import Instrumentator
+from fastapi.responses import JSONResponse, Response
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -21,6 +21,32 @@ logger = get_logger(__name__)
 settings = get_settings()
 
 limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
+
+
+async def _prometheus_middleware(request: Request, call_next):
+    import time
+
+    from app.core.metrics import http_request_duration_seconds, http_requests_total
+
+    # Skip the /metrics endpoint itself to avoid self-referential noise
+    if request.url.path == "/metrics":
+        return await call_next(request)
+
+    start = time.perf_counter()
+    response = await call_next(request)
+    duration = time.perf_counter() - start
+
+    http_requests_total.labels(
+        method=request.method,
+        path=request.url.path,
+        status_code=str(response.status_code),
+    ).inc()
+    http_request_duration_seconds.labels(
+        method=request.method,
+        path=request.url.path,
+    ).observe(duration)
+
+    return response
 
 
 async def _price_broadcaster_loop() -> None:
@@ -112,6 +138,7 @@ def create_application() -> FastAPI:
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
     app.add_middleware(SlowAPIMiddleware)
+    app.middleware("http")(_prometheus_middleware)
 
     app.add_middleware(
         CORSMiddleware,
@@ -143,10 +170,9 @@ def create_application() -> FastAPI:
 
     app.include_router(api_v1_router, prefix=settings.API_V1_PREFIX.replace("/v1", ""))
 
-    Instrumentator(
-        should_group_status_codes=False,
-        excluded_handlers=["/metrics", "/health", "/"],
-    ).instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
+    @app.get("/metrics", include_in_schema=False)
+    async def metrics():
+        return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
     @app.get("/", include_in_schema=False)
     async def root():

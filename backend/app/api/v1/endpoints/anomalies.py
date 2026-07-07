@@ -11,7 +11,7 @@ from app.schemas.anomaly import AnomalyOverview, ComponentRiskReport
 router = APIRouter(prefix="/anomalies", tags=["Anomalies"])
 logger = get_logger(__name__)
 
-_CACHE_TTL = 300  # 5 minutes
+_CACHE_TTL = 300
 
 
 @router.get(
