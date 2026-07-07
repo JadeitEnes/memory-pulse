@@ -38,7 +38,10 @@ class Settings(BaseSettings):
     CACHE_TTL_SUMMARY: int = 600
 
     SECRET_KEY: str = Field(default="change-me-in-production-use-secrets-module")
+    JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24
+    API_USERNAME: str = "admin"
+    API_PASSWORD: str = "changeme"
 
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     LOG_FORMAT: Literal["json", "console"] = "console"

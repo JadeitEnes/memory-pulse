@@ -1,6 +1,10 @@
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
+from sqlalchemy import delete, func, select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.logging import get_logger
 from app.domain.entities.models import PriceRecord
 from app.domain.exceptions import DatabaseError, DuplicatePriceError
@@ -10,9 +14,6 @@ from app.schemas.price import (
     PriceFilterSchema,
     PriceSummarySchema,
 )
-from sqlalchemy import delete, func, select
-from sqlalchemy.dialects.postgresql import insert as pg_insert
-from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = get_logger(__name__)
 

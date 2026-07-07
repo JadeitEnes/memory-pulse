@@ -4,6 +4,7 @@ from abc import abstractmethod
 from typing import ClassVar
 
 import httpx
+
 from app.core.logging import get_logger
 from app.infrastructure.collectors.base_collector import BaseCollector
 from app.schemas.price import PriceCreateSchema

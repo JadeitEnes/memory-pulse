@@ -1,11 +1,12 @@
 from typing import Any
 
+from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import JSONResponse
+
 from app.api.dependencies import AnomalyServiceDep, CacheDep
 from app.core.logging import get_logger
 from app.domain.exceptions import DatabaseError, PriceNotFoundError
 from app.schemas.anomaly import AnomalyOverview, ComponentRiskReport
-from fastapi import APIRouter, HTTPException, Query
-from fastapi.responses import JSONResponse
 
 router = APIRouter(prefix="/anomalies", tags=["Anomalies"])
 logger = get_logger(__name__)

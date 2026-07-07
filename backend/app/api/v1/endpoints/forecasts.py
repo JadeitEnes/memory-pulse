@@ -1,11 +1,12 @@
 from typing import Any
 
+from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import JSONResponse
+
 from app.api.dependencies import CacheDep, ForecastServiceDep
 from app.core.logging import get_logger
 from app.domain.exceptions import DatabaseError, PriceNotFoundError
 from app.schemas.forecast import ForecastResponse
-from fastapi import APIRouter, HTTPException, Query
-from fastapi.responses import JSONResponse
 
 router = APIRouter(prefix="/forecasts", tags=["Forecasts"])
 logger = get_logger(__name__)

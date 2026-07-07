@@ -1,6 +1,9 @@
 from typing import Any
 
-from app.api.dependencies import CacheDep, PriceServiceDep
+from fastapi import APIRouter, HTTPException, Query, status
+from fastapi.responses import JSONResponse
+
+from app.api.dependencies import CacheDep, CurrentUserDep, PriceServiceDep
 from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.domain.exceptions import (
@@ -17,8 +20,6 @@ from app.schemas.price import (
     PriceResponseSchema,
     PriceSummarySchema,
 )
-from fastapi import APIRouter, HTTPException, Query, status
-from fastapi.responses import JSONResponse
 
 router = APIRouter(prefix="/prices", tags=["Prices"])
 logger = get_logger(__name__)
@@ -40,6 +41,7 @@ async def create_price(
     price_data: PriceCreateSchema,
     service: PriceServiceDep,
     cache: CacheDep,
+    _: CurrentUserDep,
 ) -> PriceResponseSchema:
     try:
         result = await service.create_price_record(price_data)
@@ -73,6 +75,7 @@ async def bulk_create_prices(
     prices: list[PriceCreateSchema],
     service: PriceServiceDep,
     cache: CacheDep,
+    _: CurrentUserDep,
 ) -> dict:
     if len(prices) > 500:
         raise HTTPException(

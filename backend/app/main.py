@@ -1,18 +1,25 @@
 import asyncio
 from contextlib import asynccontextmanager
 
-from app.api.v1.router import api_v1_router
-from app.core.cache import close_redis_client
-from app.core.config import get_settings
-from app.core.logging import get_logger, setup_logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from slowapi.util import get_remote_address
+
+from app.api.v1.router import api_v1_router
+from app.core.cache import close_redis_client
+from app.core.config import get_settings
+from app.core.logging import get_logger, setup_logging
 
 setup_logging()
 logger = get_logger(__name__)
 settings = get_settings()
+
+limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
 
 
 async def _price_broadcaster_loop() -> None:
@@ -100,6 +107,10 @@ def create_application() -> FastAPI:
         openapi_url="/openapi.json" if not settings.is_production else None,
         lifespan=lifespan,
     )
+
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    app.add_middleware(SlowAPIMiddleware)
 
     app.add_middleware(
         CORSMiddleware,
