@@ -48,6 +48,36 @@ export type WsMessage =
   | { type: "price_update"; data: PriceRecord[] }
   | { type: "connected" };
 
+export type RiskLevel = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+export type AnomalyStatus = "NORMAL" | "WARNING" | "ANOMALY" | "EXTREME";
+
+export interface ComponentRiskReport {
+  component: string;
+  generated_at: string;
+  period_days: number;
+  latest_price: string;
+  mean_price: string;
+  std_price: string;
+  z_score: number;
+  anomaly_status: AnomalyStatus;
+  trend_direction: string;
+  price_change_pct: number;
+  volatility_pct: number;
+  risk_score: number;
+  risk_level: RiskLevel;
+  risk_factors: {
+    anomaly_contribution: number;
+    volatility_contribution: number;
+    trend_contribution: number;
+  };
+}
+
+export interface AnomalyOverview {
+  generated_at: string;
+  period_days: number;
+  reports: ComponentRiskReport[];
+}
+
 export interface ForecastPoint {
   date: string;
   predicted: string;

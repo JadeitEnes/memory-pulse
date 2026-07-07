@@ -2,7 +2,7 @@ import { useState } from "react";
 import { LiveFeed } from "./components/LiveFeed";
 import { MarketCard } from "./components/MarketCard";
 import { PriceChart } from "./components/PriceChart";
-import { useMarketOverview } from "./hooks/useMarketData";
+import { useAnomalyOverview, useMarketOverview } from "./hooks/useMarketData";
 
 function Header({ lastUpdate }: { lastUpdate: string }) {
   const time = lastUpdate
@@ -30,11 +30,7 @@ function Header({ lastUpdate }: { lastUpdate: string }) {
             <span className="w-1.5 h-1.5 rounded-full bg-up live-dot" />
             DRAM · NAND · AI Memory
           </div>
-          {time && (
-            <span className="text-muted text-xs">
-              {time}
-            </span>
-          )}
+          {time && <span className="text-muted text-xs">{time}</span>}
         </div>
       </div>
     </header>
@@ -43,8 +39,17 @@ function Header({ lastUpdate }: { lastUpdate: string }) {
 
 export default function App() {
   const { data, loading, error } = useMarketOverview();
+  const { data: anomalyData } = useAnomalyOverview(30);
   const [selectedComponent, setSelectedComponent] = useState<string>("HBM3");
   const [chartDays, setChartDays] = useState(30);
+
+  const riskByComponent = Object.fromEntries(
+    anomalyData?.reports.map((r) => [r.component, r]) ?? []
+  );
+
+  const criticalCount =
+    anomalyData?.reports.filter((r) => r.risk_level === "CRITICAL" || r.risk_level === "HIGH")
+      .length ?? 0;
 
   return (
     <div className="min-h-screen bg-surface">
@@ -68,7 +73,14 @@ export default function App() {
           <>
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-white font-semibold text-sm">Market Overview</h2>
+                <div className="flex items-center gap-3">
+                  <h2 className="text-white font-semibold text-sm">Market Overview</h2>
+                  {criticalCount > 0 && (
+                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-full text-down bg-down-bg animate-pulse">
+                      {criticalCount} alert{criticalCount > 1 ? "s" : ""}
+                    </span>
+                  )}
+                </div>
                 <span className="text-muted text-xs">{data.total_components} components tracked</span>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -78,6 +90,7 @@ export default function App() {
                     summary={summary}
                     selected={selectedComponent === summary.component}
                     onClick={() => setSelectedComponent(summary.component)}
+                    risk={riskByComponent[summary.component]}
                   />
                 ))}
               </div>

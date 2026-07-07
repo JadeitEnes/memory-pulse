@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
-import type { ChartPoint, ForecastResponse, MarketOverview, PriceHistory } from "../types/market";
+import type {
+  AnomalyOverview,
+  ChartPoint,
+  ForecastResponse,
+  MarketOverview,
+  PriceHistory,
+} from "../types/market";
 
 const API = "/api/v1";
 
@@ -89,4 +95,19 @@ export function useForecast(component: string, horizon: number) {
   }, [component, horizon]);
 
   return { data, loading, error };
+}
+
+export function useAnomalyOverview(days = 30) {
+  const [data, setData] = useState<AnomalyOverview | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`${API}/anomalies/overview?days=${days}`)
+      .then((r) => r.json() as Promise<AnomalyOverview>)
+      .then(setData)
+      .catch(() => null)
+      .finally(() => setLoading(false));
+  }, [days]);
+
+  return { data, loading };
 }

@@ -1,6 +1,6 @@
 import { Line, LineChart, ResponsiveContainer } from "recharts";
 import { usePriceHistory } from "../hooks/useMarketData";
-import type { PriceSummary } from "../types/market";
+import type { ComponentRiskReport, PriceSummary, RiskLevel } from "../types/market";
 
 const SEGMENT_LABELS: Record<string, string> = {
   SERVER: "Server",
@@ -11,22 +11,30 @@ const SEGMENT_LABELS: Record<string, string> = {
   CONSUMER_SSD: "Cons. SSD",
 };
 
+const RISK_CONFIG: Record<RiskLevel, { label: string; class: string }> = {
+  LOW: { label: "LOW", class: "text-up bg-up-bg" },
+  MEDIUM: { label: "MED", class: "text-gold bg-gold/10" },
+  HIGH: { label: "HIGH", class: "text-orange-400 bg-orange-400/10" },
+  CRITICAL: { label: "CRIT", class: "text-down bg-down-bg animate-pulse" },
+};
+
 interface Props {
   summary: PriceSummary;
   selected: boolean;
   onClick: () => void;
+  risk?: ComponentRiskReport;
 }
 
-export function MarketCard({ summary, selected, onClick }: Props) {
+export function MarketCard({ summary, selected, onClick, risk }: Props) {
   const { points } = usePriceHistory(summary.component, 30);
 
   const latest = parseFloat(summary.latest_price);
   const change = summary.price_change_pct ? parseFloat(summary.price_change_pct) : 0;
   const isUp = change >= 0;
   const absChange = Math.abs(change).toFixed(2);
-
   const priceDisplay = latest >= 1 ? `$${latest.toFixed(2)}` : `$${latest.toFixed(4)}`;
   const precision = latest >= 1 ? 2 : 4;
+  const riskCfg = risk ? RISK_CONFIG[risk.risk_level] : null;
 
   return (
     <button
@@ -46,15 +54,23 @@ export function MarketCard({ summary, selected, onClick }: Props) {
             {summary.component}
           </h3>
         </div>
-        <span
-          className={`text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0 ml-2 ${
-            isUp
-              ? "text-up bg-up-bg"
-              : "text-down bg-down-bg"
-          }`}
-        >
-          {isUp ? "▲" : "▼"} {absChange}%
-        </span>
+        <div className="flex flex-col items-end gap-1 ml-2 shrink-0">
+          <span
+            className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+              isUp ? "text-up bg-up-bg" : "text-down bg-down-bg"
+            }`}
+          >
+            {isUp ? "▲" : "▼"} {absChange}%
+          </span>
+          {riskCfg && (
+            <span
+              className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full tracking-wide ${riskCfg.class}`}
+              title={`Risk score: ${risk!.risk_score} · Z-score: ${risk!.z_score}`}
+            >
+              {riskCfg.label}
+            </span>
+          )}
+        </div>
       </div>
 
       <p className="text-xl font-mono font-bold text-white tracking-tight">{priceDisplay}</p>
@@ -77,7 +93,11 @@ export function MarketCard({ summary, selected, onClick }: Props) {
       <div className="mt-1.5 flex justify-between text-[10px] text-muted">
         <span>Lo ${parseFloat(summary.min_price).toFixed(precision)}</span>
         <span>Hi ${parseFloat(summary.max_price).toFixed(precision)}</span>
-        <span className="text-subtle">{summary.data_points}pts</span>
+        {risk ? (
+          <span className="text-muted">σ {risk.volatility_pct.toFixed(1)}%</span>
+        ) : (
+          <span className="text-subtle">{summary.data_points}pts</span>
+        )}
       </div>
     </button>
   );
