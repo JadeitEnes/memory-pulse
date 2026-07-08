@@ -30,15 +30,14 @@ class ConnectionManager:
         logger.info("websocket_disconnected", total_connections=self.connection_count)
 
     async def broadcast(self, message: dict) -> None:
-        dead_connections = []
+        dead: list[WebSocket] = []
         for connection in self._active_connections:
             try:
                 await connection.send_json(message)
             except Exception:
-                dead_connections.append(connection)
-
-        for dead in dead_connections:
-            self.disconnect(dead)
+                dead.append(connection)
+        for conn in dead:
+            self.disconnect(conn)
 
 
 manager = ConnectionManager()
@@ -51,4 +50,6 @@ async def websocket_price_stream(websocket: WebSocket):
         while True:
             await websocket.receive_text()
     except WebSocketDisconnect:
+        manager.disconnect(websocket)
+    except Exception:
         manager.disconnect(websocket)
