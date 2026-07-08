@@ -167,7 +167,7 @@ class AnomalyService:
         days: int,
     ) -> list[dict]:
         try:
-            filters = PriceFilterSchema(component=component, days=days, limit=5000, offset=0)
+            filters = PriceFilterSchema(component=component, days=days, limit=1000, offset=0)
             return await self._repo.get_time_series(filters)
         except Exception as exc:
             raise DatabaseError(f"Failed to fetch price data: {exc}") from exc
