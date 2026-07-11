@@ -39,7 +39,7 @@ class Settings(BaseSettings):
 
     SECRET_KEY: str = Field(default="change-me-in-production-use-secrets-module")
     JWT_ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     API_USERNAME: str = "admin"
     API_PASSWORD: str = "changeme"
 
@@ -53,6 +53,15 @@ class Settings(BaseSettings):
 
     PRICE_COLLECTION_INTERVAL_MINUTES: int = 360
     WS_BROADCAST_INTERVAL_SECONDS: float = 5.0
+
+    @field_validator("SECRET_KEY")
+    @classmethod
+    def validate_secret_key(cls, v: str) -> str:
+        if v == "change-me-in-production-use-secrets-module":
+            import os
+            if os.getenv("ENVIRONMENT") == "production":
+                raise ValueError("SECRET_KEY must be changed in production")
+        return v
 
     @field_validator("ENVIRONMENT")
     @classmethod
