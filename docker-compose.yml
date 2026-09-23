@@ -109,7 +109,7 @@ services:
     networks:
       - memory_net
     restart: unless-stopped
-    command: celery -A app.infrastructure.celery_app worker --loglevel=info -Q prices,scrapers
+    command: celery -A app.infrastructure.celery_app worker --loglevel=info -Q prices
 
   beat:
     build:

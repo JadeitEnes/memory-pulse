@@ -11,6 +11,7 @@ def create_celery_app() -> Celery:
         "memory_pulse",
         broker=settings.REDIS_BROKER_URL,
         backend=settings.REDIS_BROKER_URL,
+        include=["app.infrastructure.tasks.price_tasks"],
     )
 
     app.conf.update(
@@ -21,7 +22,6 @@ def create_celery_app() -> Celery:
         enable_utc=True,
         task_routes={
             "app.infrastructure.tasks.price_tasks.*": {"queue": "prices"},
-            "app.infrastructure.tasks.scraper_tasks.*": {"queue": "scrapers"},
         },
         result_expires=3600,
         task_max_retries=3,
