@@ -28,7 +28,7 @@ A full-stack market intelligence system that tracks, stores, analyzes, and visua
 ## Architecture
 
 ```
-Newegg HTTP Scraper ─┐
+Corsair HTTP Scraper ─┐
                      ├──► Celery Worker ──── Redis Broker (noeviction)
 Simulated Collector ─┘         │
                                │ bulk insert
@@ -53,7 +53,7 @@ Observability:
 
 ## Features
 
-- **Real price collection** — Newegg scraper (DDR5, DDR4, NVMe) with graceful fallback to simulated data when blocked
+- **Real price collection** — Corsair storefront scraper (DDR5, DDR4, NVMe), parses the site's own Next.js JSON payload rather than HTML; graceful fallback to simulated data when blocked
 - **Time-series forecasting** — Prophet model, 30/60/90-day horizon, 80% confidence interval, cached 1 hour
 - **Anomaly detection** — Z-score (σ=1.5/2.0/3.0 thresholds) + composite risk score (anomaly 40% + volatility 35% + trend 25%)
 - **JWT authentication** — Bearer token login, bcrypt password hashing, protected write endpoints
@@ -131,7 +131,7 @@ Key variables:
 - [x] TimescaleDB hypertable with composite primary key
 - [x] Celery distributed task queue with exponential backoff retry
 - [x] Redis dual-instance cache layer (broker vs cache separation)
-- [x] HTTP scraper — Newegg (httpx + BeautifulSoup, median price, per-GB normalization)
+- [x] HTTP scraper — Corsair (httpx, parses embedded Next.js JSON, category-filtered median, per-GB normalization)
 - [x] Prophet time-series forecasting with 80% confidence bands
 - [x] Z-score anomaly detection + composite risk scoring
 - [x] JWT authentication + bcrypt + slowapi rate limiting

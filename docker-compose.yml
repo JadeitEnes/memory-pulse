@@ -86,7 +86,7 @@ services:
     networks:
       - memory_net
     restart: unless-stopped
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --reload-exclude ".pytest_cache/*" --reload-exclude "*.pyc" --reload-exclude "celerybeat-schedule*"
 
   worker:
     build:

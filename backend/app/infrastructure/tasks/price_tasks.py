@@ -33,7 +33,7 @@ async def _collect_prices_async() -> dict:
 
     from app.core.cache import RedisCache, get_redis_client
     from app.core.config import get_settings
-    from app.infrastructure.collectors.newegg_collector import NeweggCollector
+    from app.infrastructure.collectors.corsair_collector import CorsairCollector
     from app.infrastructure.collectors.simulated_collector import (
         SimulatedPriceCollector,
     )
@@ -48,25 +48,25 @@ async def _collect_prices_async() -> dict:
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
     try:
-        # Run simulated + Newegg collectors concurrently.
-        # If Newegg fails (blocked, timeout) we continue with simulated only.
+        # Run simulated + Corsair collectors concurrently.
+        # If Corsair fails (blocked, timeout) we continue with simulated only.
         simulated_task = asyncio.create_task(SimulatedPriceCollector().collect())
-        newegg_task = asyncio.create_task(_safe_collect(NeweggCollector()))
+        corsair_task = asyncio.create_task(_safe_collect(CorsairCollector()))
 
-        simulated_prices, newegg_prices = await asyncio.gather(simulated_task, newegg_task)
+        simulated_prices, corsair_prices = await asyncio.gather(simulated_task, corsair_task)
 
-        prices: list[PriceCreateSchema] = simulated_prices + newegg_prices
+        prices: list[PriceCreateSchema] = simulated_prices + corsair_prices
         logger.info(
             "collectors_done",
             simulated=len(simulated_prices),
-            newegg=len(newegg_prices),
+            corsair=len(corsair_prices),
             total=len(prices),
         )
 
         for p in simulated_prices:
             prices_collected_total.labels(component=p.component.value, source="simulated").inc()
-        for p in newegg_prices:
-            prices_collected_total.labels(component=p.component.value, source="newegg").inc()
+        for p in corsair_prices:
+            prices_collected_total.labels(component=p.component.value, source="corsair").inc()
 
         async with session_factory() as session:
             repo = PostgresPriceRepository(session=session)
