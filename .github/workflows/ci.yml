@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   integration-tests:
-    name: Integration Tests
+    name: Tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -34,8 +34,8 @@ jobs:
             sleep 5
           done
 
-      - name: Run integration tests
-        run: docker compose exec -T api python -m pytest tests/integration/ -v --tb=short
+      - name: Run tests
+        run: docker compose exec -T api python -m pytest tests/ -v --tb=short
 
       - name: Show logs on failure
         if: failure()

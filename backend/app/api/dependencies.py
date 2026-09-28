@@ -12,6 +12,7 @@ from app.repositories.implementations.postgres_price_repository import (
 )
 from app.repositories.interfaces.price_repository import IPriceRepository
 from app.services.anomaly_service import AnomalyService
+from app.services.forecast_comparison_service import ForecastComparisonService
 from app.services.forecast_service import ForecastService
 from app.services.price_service import PriceService
 
@@ -42,6 +43,12 @@ def get_anomaly_service(
     return AnomalyService(price_repository=repository)
 
 
+def get_forecast_comparison_service(
+    repository: IPriceRepository = Depends(get_price_repository),
+) -> ForecastComparisonService:
+    return ForecastComparisonService(price_repository=repository)
+
+
 def get_cache() -> RedisCache:
     return RedisCache(client=get_redis_client())
 
@@ -59,6 +66,9 @@ async def get_current_user(token: str = Depends(_oauth2_scheme)) -> str:
 
 PriceServiceDep = Annotated[PriceService, Depends(get_price_service)]
 ForecastServiceDep = Annotated[ForecastService, Depends(get_forecast_service)]
+ForecastComparisonServiceDep = Annotated[
+    ForecastComparisonService, Depends(get_forecast_comparison_service)
+]
 AnomalyServiceDep = Annotated[AnomalyService, Depends(get_anomaly_service)]
 DBSessionDep = Annotated[AsyncSession, Depends(get_db)]
 CacheDep = Annotated[RedisCache, Depends(get_cache)]

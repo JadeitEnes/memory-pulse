@@ -16,8 +16,8 @@ A full-stack market intelligence system that tracks, stores, analyzes, and visua
 | **Database** | TimescaleDB (PostgreSQL + hypertable partitioning) |
 | **Caching** | Redis dual-instance: broker (noeviction) + cache (allkeys-lru) |
 | **Task Queue** | Celery + Redis Broker, Celery Beat scheduler |
-| **Scraping** | httpx async + brotli, BeautifulSoup, exponential backoff retry |
-| **Forecasting** | Prophet (Meta), asyncio.to_thread (CPU-bound isolation) |
+| **Scraping** | httpx async + brotli, embedded Next.js JSON parsing, exponential backoff retry |
+| **Forecasting** | Prophet (Meta) + XGBoost (quantile regression), backtested side-by-side, asyncio.to_thread (CPU-bound isolation) |
 | **Auth** | JWT (python-jose HS256), bcrypt, slowapi rate limiting |
 | **Frontend** | React 18, TypeScript, Vite, Recharts, TailwindCSS, WebSocket |
 | **Observability** | Prometheus (custom ASGI middleware), Grafana, Celery Flower |
@@ -55,6 +55,7 @@ Observability:
 
 - **Real price collection** — Corsair storefront scraper (DDR5, DDR4, NVMe), parses the site's own Next.js JSON payload rather than HTML; graceful fallback to simulated data when blocked
 - **Time-series forecasting** — Prophet model, 30/60/90-day horizon, 80% confidence interval, cached 1 hour
+- **Prophet vs XGBoost comparison** — `/forecasts/{component}/compare` fits both on the same history, backtests each against real held-out days (MAE/RMSE, not in-sample fit), then forecasts the horizon with both; XGBoost uses three quantile-regression models (lag/rolling/calendar features, recursive multi-step) for its own prediction interval
 - **Anomaly detection** — Z-score (σ=1.5/2.0/3.0 thresholds) + composite risk score (anomaly 40% + volatility 35% + trend 25%)
 - **JWT authentication** — Bearer token login, bcrypt password hashing, protected write endpoints
 - **Rate limiting** — 60 req/min global, 10 req/min on `/auth/token` (brute-force protection)
@@ -133,12 +134,13 @@ Key variables:
 - [x] Redis dual-instance cache layer (broker vs cache separation)
 - [x] HTTP scraper — Corsair (httpx, parses embedded Next.js JSON, category-filtered median, per-GB normalization)
 - [x] Prophet time-series forecasting with 80% confidence bands
+- [x] XGBoost quantile-regression forecasting, backtested head-to-head against Prophet
 - [x] Z-score anomaly detection + composite risk scoring
 - [x] JWT authentication + bcrypt + slowapi rate limiting
 - [x] React dashboard — live WebSocket, forecast chart, risk cards
 - [x] Prometheus metrics + Grafana dashboard + Celery Flower
 - [x] Nginx reverse proxy with security headers
-- [x] Integration tests 30/30 (real DB + Redis)
+- [x] Integration tests 30/30 (real DB + Redis) + 11 unit tests
 - [x] GitHub Actions CI pipeline
 
 ---

@@ -3,11 +3,10 @@ from datetime import datetime, timezone
 from decimal import Decimal
 
 from app.core.logging import get_logger
-from app.domain.entities.enums import MemoryComponent
-from app.domain.exceptions import DatabaseError, PriceNotFoundError
+from app.domain.exceptions import PriceNotFoundError
 from app.repositories.interfaces.price_repository import IPriceRepository
 from app.schemas.forecast import ForecastPoint, ForecastResponse
-from app.schemas.price import PriceFilterSchema
+from app.services.historical_data import fetch_historical_records, resolve_component
 
 logger = get_logger(__name__)
 
@@ -31,7 +30,10 @@ def _run_prophet(records: list[dict], horizon_days: int) -> list[dict]:
     )
 
     # Aggregate to daily averages — Prophet works on daily granularity
-    df["ds"] = pd.to_datetime(df["ds"]).dt.tz_localize(None).dt.normalize()
+    df["ds"] = pd.to_datetime(df["ds"])
+    if df["ds"].dt.tz is not None:
+        df["ds"] = df["ds"].dt.tz_localize(None)
+    df["ds"] = df["ds"].dt.normalize()
     df = df.groupby("ds", as_index=False)["y"].mean()
     df = df.sort_values("ds").reset_index(drop=True)
 
@@ -70,22 +72,8 @@ class ForecastService:
         component: str,
         horizon_days: int = 30,
     ) -> ForecastResponse:
-        try:
-            component_enum = MemoryComponent(component.upper())
-        except ValueError:
-            raise PriceNotFoundError(component=component)
-
-        filters = PriceFilterSchema(
-            component=component_enum,
-            days=HISTORICAL_DAYS,
-            limit=5000,
-            offset=0,
-        )
-
-        try:
-            records = await self._repo.get_time_series(filters)
-        except Exception as e:
-            raise DatabaseError(f"Failed to fetch historical data: {e}") from e
+        component_enum = resolve_component(component)
+        records = await fetch_historical_records(self._repo, component_enum, HISTORICAL_DAYS)
 
         if len(records) < MIN_DATA_POINTS:
             raise PriceNotFoundError(component=component)

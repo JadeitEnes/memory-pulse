@@ -14,6 +14,7 @@ from app.schemas.anomaly import (
     RiskLevel,
 )
 from app.schemas.price import PriceFilterSchema
+from app.services.historical_data import resolve_component
 
 logger = get_logger(__name__)
 
@@ -116,11 +117,7 @@ class AnomalyService:
         component: str,
         days: int = 30,
     ) -> ComponentRiskReport:
-        try:
-            component_enum = MemoryComponent(component.upper())
-        except ValueError:
-            raise PriceNotFoundError(component=component)
-
+        component_enum = resolve_component(component)
         records = await self._fetch_records(component_enum, days)
 
         if len(records) < MIN_DATA_POINTS:
