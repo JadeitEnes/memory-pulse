@@ -10,6 +10,7 @@ import {
 } from "recharts";
 import { useForecast, usePriceHistory } from "../hooks/useMarketData";
 import type { ChartPoint } from "../types/market";
+import { SourceBadge } from "./SourceBadge";
 
 const DAY_OPTIONS = [7, 30, 90] as const;
 const HORIZON_OPTIONS = [30, 60, 90] as const;
@@ -44,7 +45,7 @@ interface CombinedPoint {
 
 export function PriceChart({ component, days, onDaysChange }: Props) {
   const [horizon, setHorizon] = useState(30);
-  const { points, loading, error } = usePriceHistory(component, days);
+  const { points, sources, loading, error } = usePriceHistory(component, days);
   const { data: forecast, loading: fLoading } = useForecast(component, horizon);
 
   const sampled = samplePoints(points, 200);
@@ -95,7 +96,10 @@ export function PriceChart({ component, days, onDaysChange }: Props) {
     <div className="bg-card border border-border rounded-xl p-5 shadow-card">
       <div className="flex items-center justify-between mb-1">
         <div>
-          <h2 className="text-white font-bold text-xl tracking-tight">{component}</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-white font-bold text-xl tracking-tight">{component}</h2>
+            <SourceBadge sources={sources} />
+          </div>
           <p className="text-muted text-xs">Price history · USD/GB</p>
         </div>
         <div className="flex gap-1">

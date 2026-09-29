@@ -1,6 +1,7 @@
 import { Line, LineChart, ResponsiveContainer } from "recharts";
 import { usePriceHistory } from "../hooks/useMarketData";
 import type { ComponentRiskReport, PriceSummary, RiskLevel } from "../types/market";
+import { SourceBadge } from "./SourceBadge";
 
 const SEGMENT_LABELS: Record<string, string> = {
   SERVER: "Server",
@@ -26,7 +27,7 @@ interface Props {
 }
 
 export function MarketCard({ summary, selected, onClick, risk }: Props) {
-  const { points } = usePriceHistory(summary.component, 30);
+  const { points, sources } = usePriceHistory(summary.component, 30);
 
   const latest = parseFloat(summary.latest_price);
   const change = summary.price_change_pct ? parseFloat(summary.price_change_pct) : 0;
@@ -74,7 +75,10 @@ export function MarketCard({ summary, selected, onClick, risk }: Props) {
       </div>
 
       <p className="text-xl font-mono font-bold text-white tracking-tight">{priceDisplay}</p>
-      <p className="text-[11px] text-muted mb-2">USD / GB</p>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-[11px] text-muted">USD / GB</p>
+        <SourceBadge sources={sources} />
+      </div>
 
       <div className="h-10">
         <ResponsiveContainer width="100%" height="100%">

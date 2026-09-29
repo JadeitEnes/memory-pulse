@@ -60,6 +60,7 @@ export function usePriceHistory(component: string, days: number) {
         const mapped: ChartPoint[] = data.items.map((item) => ({
           time: item.recorded_at,
           price: parseFloat(item.price_value),
+          source: item.data_source,
         }));
         setPoints(mapped);
         setError(null);
@@ -68,7 +69,9 @@ export function usePriceHistory(component: string, days: number) {
       .finally(() => setLoading(false));
   }, [component, days]);
 
-  return { points, loading, error };
+  const sources = points.map((p) => p.source);
+
+  return { points, sources, loading, error };
 }
 
 export function useForecast(component: string, horizon: number) {

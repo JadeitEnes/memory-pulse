@@ -1,4 +1,5 @@
 import { useWebSocket } from "../hooks/useWebSocket";
+import { SourceBadge } from "./SourceBadge";
 
 function formatPrice(value: string): string {
   const n = parseFloat(value);
@@ -36,7 +37,6 @@ export function LiveFeed() {
       ) : (
         <div className="space-y-1">
           {prices.map((p) => {
-            const n = parseFloat(p.price_value);
             return (
               <div
                 key={p.component}
@@ -48,9 +48,12 @@ export function LiveFeed() {
                   </p>
                   <p className="text-muted text-[11px]">{p.market_segment}</p>
                 </div>
-                <p className="font-mono text-accent font-bold text-sm">
-                  {formatPrice(p.price_value)}
-                </p>
+                <div className="flex flex-col items-end gap-1">
+                  <p className="font-mono text-accent font-bold text-sm">
+                    {formatPrice(p.price_value)}
+                  </p>
+                  <SourceBadge sources={[p.data_source]} />
+                </div>
               </div>
             );
           })}

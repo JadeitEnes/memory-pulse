@@ -42,6 +42,7 @@ export interface PriceHistory {
 export interface ChartPoint {
   time: string;
   price: number;
+  source: string;
 }
 
 export type WsMessage =

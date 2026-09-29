@@ -26,3 +26,6 @@ redis_data/
 logs/
 
 celerybeat-schedule*
+
+node_modules/
+dist/
